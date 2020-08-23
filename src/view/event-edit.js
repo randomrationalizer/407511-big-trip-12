@@ -1,179 +1,185 @@
+import {EVENT_OFFERS, eventTypeToOffers, CITIES, EVENT_TYPES, TRANSFER_EVENTS} from "../const.js";
+import {capitalize, createPreposition} from "../util.js";
+
+// Возвращает текущую дату
+const generateDate = () => {
+  const curentDate = new Date();
+  curentDate.setHours(0, 0);
+  return new Date(curentDate);
+};
+
+// Возвращает дату в виде строки в формате: "день/месяц/год часы:минуты"
+const humanizeDate = (date) => {
+  return date.toLocaleString(`en-GB`, {day: `2-digit`, month: `2-digit`, year: `2-digit`, hour: `2-digit`, minute: `2-digit`}).replace(`,`, ``);
+};
+
+// Возвращает шаблон элемента списка типов точки маршрута
+const createEvetnTypeItemTemplates = (types, selectedType) => {
+  return `${types.map((type) => `<div class="event__type-item">
+    <input id="event-type-taxi-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${type}" ${type === selectedType ? `checked` : ``}>
+    <label class="event__type-label  event__type-label--${type}" for="event-type-${type}">${capitalize(type)}</label>
+  </div>`).join(``)}`;
+};
+
+// Возвращает шаблон списка типов точки маршрута
+const createEventTypeTemplate = (selectedType) => {
+  const activityEvents = EVENT_TYPES.filter((type) => !TRANSFER_EVENTS.includes(type));
+
+  return `<div class="event__type-list">
+    <fieldset class="event__type-group">
+      <legend class="visually-hidden">Transfer</legend>
+
+      ${createEvetnTypeItemTemplates(TRANSFER_EVENTS, selectedType)}
+
+    <fieldset class="event__type-group">
+      <legend class="visually-hidden">Activity</legend>
+
+      ${createEvetnTypeItemTemplates(activityEvents, selectedType)}
+
+    </fieldset>
+  </div>`;
+};
+
+// Возвращает шаблон блока выбора пункта назначения
+const createDestinationTemplate = (destination, type) => {
+
+  return `<div class="event__field-group  event__field-group--destination">
+    <label class="event__label  event__type-output" for="event-destination-1">
+      ${capitalize(type)} ${createPreposition(type)}
+    </label>
+    <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destination}" list="destination-list-1">
+    <datalist id="destination-list-1">
+      ${CITIES.map((city) => `<option value="${city}"></option>`).join(``)}
+    </datalist>
+  </div>`;
+};
+
+// Возвращает шаблон блока с описанием пункта назначения
+const createCityInfoTemplate = (info) => {
+  const {description, pics} = info;
+
+  return `<section class="event__section  event__section--destination">
+    <h3 class="event__section-title  event__section-title--destination">Destination</h3>
+    <p class="event__destination-description">${description}</p>
+
+    <div class="event__photos-container">
+      <div class="event__photos-tape">
+        ${pics.map((pic) => `<img class="event__photo" src="${pic}" alt="Event photo">`).join(``)}
+      </div>
+    </div>
+  </section>`;
+};
+
+// Возвращает шаблон блока выбора даты
+const createDateEditTemplate = (start, end) => {
+
+  const startDate = start !== null ? humanizeDate(start) : humanizeDate(generateDate());
+  const endDate = start !== null ? humanizeDate(end) : humanizeDate(generateDate());
+
+  return `<div class="event__field-group  event__field-group--time">
+    <label class="visually-hidden" for="event-start-time-1">
+      From
+    </label>
+    <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="${startDate}">
+    &mdash;
+    <label class="visually-hidden" for="event-end-time-1">
+      To
+    </label>
+    <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="${endDate}">
+  </div>`;
+};
+
+// Возвращает шаблон блока дополнительных опций точки маршрута
+const createOffersTemplate = (type, selectedOffers) => {
+  const availableOffers = eventTypeToOffers[type];
+
+  if (availableOffers === null) {
+    return ``;
+  }
+
+  const allOffers = availableOffers.map((offer) => EVENT_OFFERS.find((elem) => elem.type === offer));
+
+  return `<section class="event__section  event__section--offers">
+    <h3 class="event__section-title  event__section-title--offers">Offers</h3>
+
+    <div class="event__available-offers">
+
+      ${allOffers.map((offer) => `<div class="event__offer-selector">
+        <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offer.type}" type="checkbox" name="event-offer-${offer.type}" ${selectedOffers && selectedOffers.some((elem) => elem.type === offer.type) ? `checked` : ``}>
+        <label class="event__offer-label" for="event-offer-${offer.type}">
+          <span class="event__offer-title">${offer.title}</span>
+          &plus;
+          &euro;&nbsp;<span class="event__offer-price">${offer.price}</span>
+        </label>
+      </div>`).join(``)}
+    </div>
+  </section>`;
+};
+
+
 // Возвращает шаблон формы редактирования/создания точки маршрута
-export const createEventEditFormTemplate = () => {
-  return (
-    `<form class="trip-events__item  event  event--edit" action="#" method="post">
+export const createEventEditFormTemplate = (tripEvent = {}) => {
+  const {
+    type = `bus`,
+    destination = ``,
+    cityInfo = null,
+    startDate = null,
+    endDate = null,
+    price = ``,
+    offers = null,
+    isFavorite = false
+  } = tripEvent;
+
+  const eventTypeListTemplate = createEventTypeTemplate(type);
+  const destinationTemplate = createDestinationTemplate(destination, type);
+  const dateTemplate = createDateEditTemplate(startDate, endDate);
+  const isNewEvent = startDate === null && endDate === null ? true : false;
+  const offersTemplate = createOffersTemplate(type, offers);
+  const cityInfoTemplate = cityInfo !== null ? createCityInfoTemplate(cityInfo) : ``;
+
+  return `<form class="trip-events__item  event  event--edit" action="#" method="post">
       <header class="event__header">
         <div class="event__type-wrapper">
           <label class="event__type  event__type-btn" for="event-type-toggle-1">
             <span class="visually-hidden">Choose event type</span>
-            <img class="event__type-icon" width="17" height="17" src="img/icons/flight.png" alt="Event type icon">
+            <img class="event__type-icon" width="17" height="17" src="img/icons/${type}.png" alt="Event type icon">
           </label>
           <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox">
 
-          <div class="event__type-list">
-            <fieldset class="event__type-group">
-              <legend class="visually-hidden">Transfer</legend>
-
-              <div class="event__type-item">
-                <input id="event-type-taxi-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="taxi">
-                <label class="event__type-label  event__type-label--taxi" for="event-type-taxi-1">Taxi</label>
-              </div>
-
-              <div class="event__type-item">
-                <input id="event-type-bus-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="bus">
-                <label class="event__type-label  event__type-label--bus" for="event-type-bus-1">Bus</label>
-              </div>
-
-              <div class="event__type-item">
-                <input id="event-type-train-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="train">
-                <label class="event__type-label  event__type-label--train" for="event-type-train-1">Train</label>
-              </div>
-
-              <div class="event__type-item">
-                <input id="event-type-ship-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="ship">
-                <label class="event__type-label  event__type-label--ship" for="event-type-ship-1">Ship</label>
-              </div>
-
-              <div class="event__type-item">
-                <input id="event-type-transport-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="transport">
-                <label class="event__type-label  event__type-label--transport" for="event-type-transport-1">Transport</label>
-              </div>
-
-              <div class="event__type-item">
-                <input id="event-type-drive-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="drive">
-                <label class="event__type-label  event__type-label--drive" for="event-type-drive-1">Drive</label>
-              </div>
-
-              <div class="event__type-item">
-                <input id="event-type-flight-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="flight" checked>
-                <label class="event__type-label  event__type-label--flight" for="event-type-flight-1">Flight</label>
-              </div>
-            </fieldset>
-
-            <fieldset class="event__type-group">
-              <legend class="visually-hidden">Activity</legend>
-
-              <div class="event__type-item">
-                <input id="event-type-check-in-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="check-in">
-                <label class="event__type-label  event__type-label--check-in" for="event-type-check-in-1">Check-in</label>
-              </div>
-
-              <div class="event__type-item">
-                <input id="event-type-sightseeing-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="sightseeing">
-                <label class="event__type-label  event__type-label--sightseeing" for="event-type-sightseeing-1">Sightseeing</label>
-              </div>
-
-              <div class="event__type-item">
-                <input id="event-type-restaurant-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="restaurant">
-                <label class="event__type-label  event__type-label--restaurant" for="event-type-restaurant-1">Restaurant</label>
-              </div>
-            </fieldset>
-          </div>
+          ${eventTypeListTemplate}
         </div>
 
-        <div class="event__field-group  event__field-group--destination">
-          <label class="event__label  event__type-output" for="event-destination-1">
-            Flight to
-          </label>
-          <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="Geneva" list="destination-list-1">
-          <datalist id="destination-list-1">
-            <option value="Amsterdam"></option>
-            <option value="Geneva"></option>
-            <option value="Chamonix"></option>
-            <option value="Saint Petersburg"></option>
-          </datalist>
-        </div>
-
-        <div class="event__field-group  event__field-group--time">
-          <label class="visually-hidden" for="event-start-time-1">
-            From
-          </label>
-          <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="18/03/19 00:00">
-          &mdash;
-          <label class="visually-hidden" for="event-end-time-1">
-            To
-          </label>
-          <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="18/03/19 00:00">
-        </div>
+        ${destinationTemplate}
+        ${dateTemplate}
 
         <div class="event__field-group  event__field-group--price">
           <label class="event__label" for="event-price-1">
             <span class="visually-hidden">Price</span>
             &euro;
           </label>
-          <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="">
+          <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${price}">
         </div>
 
         <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-        <button class="event__reset-btn" type="reset">Cancel</button>
+        <button class="event__reset-btn" type="reset">${isNewEvent ? `Cancel` : `Delete`}</button>
+
+        ${!isNewEvent ? `<input id="event-favorite-1" class="event__favorite-checkbox  visually-hidden" type="checkbox" name="event-favorite" ${isFavorite ? `checked` : ``}>
+
+        <label class="event__favorite-btn" for="event-favorite-1">
+          <span class="visually-hidden">Add to favorite</span>
+          <svg class="event__favorite-icon" width="28" height="28" viewBox="0 0 28 28">
+            <path d="M14 21l-8.22899 4.3262 1.57159-9.1631L.685209 9.67376 9.8855 8.33688 14 0l4.1145 8.33688 9.2003 1.33688-6.6574 6.48934 1.5716 9.1631L14 21z"/>
+          </svg>
+        </label>
+
+        <button class="event__rollup-btn" type="button">
+          <span class="visually-hidden">Open event</span>
+        </button>` : ``}
+
       </header>
       <section class="event__details">
-        <section class="event__section  event__section--offers">
-          <h3 class="event__section-title  event__section-title--offers">Offers</h3>
-
-          <div class="event__available-offers">
-            <div class="event__offer-selector">
-              <input class="event__offer-checkbox  visually-hidden" id="event-offer-luggage-1" type="checkbox" name="event-offer-luggage" checked>
-              <label class="event__offer-label" for="event-offer-luggage-1">
-                <span class="event__offer-title">Add luggage</span>
-                &plus;
-                &euro;&nbsp;<span class="event__offer-price">30</span>
-              </label>
-            </div>
-
-            <div class="event__offer-selector">
-              <input class="event__offer-checkbox  visually-hidden" id="event-offer-comfort-1" type="checkbox" name="event-offer-comfort" checked>
-              <label class="event__offer-label" for="event-offer-comfort-1">
-                <span class="event__offer-title">Switch to comfort class</span>
-                &plus;
-                &euro;&nbsp;<span class="event__offer-price">100</span>
-              </label>
-            </div>
-
-            <div class="event__offer-selector">
-              <input class="event__offer-checkbox  visually-hidden" id="event-offer-meal-1" type="checkbox" name="event-offer-meal">
-              <label class="event__offer-label" for="event-offer-meal-1">
-                <span class="event__offer-title">Add meal</span>
-                &plus;
-                &euro;&nbsp;<span class="event__offer-price">15</span>
-              </label>
-            </div>
-
-            <div class="event__offer-selector">
-              <input class="event__offer-checkbox  visually-hidden" id="event-offer-seats-1" type="checkbox" name="event-offer-seats">
-              <label class="event__offer-label" for="event-offer-seats-1">
-                <span class="event__offer-title">Choose seats</span>
-                &plus;
-                &euro;&nbsp;<span class="event__offer-price">5</span>
-              </label>
-            </div>
-
-            <div class="event__offer-selector">
-              <input class="event__offer-checkbox  visually-hidden" id="event-offer-train-1" type="checkbox" name="event-offer-train">
-              <label class="event__offer-label" for="event-offer-train-1">
-                <span class="event__offer-title">Travel by train</span>
-                &plus;
-                &euro;&nbsp;<span class="event__offer-price">40</span>
-              </label>
-            </div>
-          </div>
-        </section>
-
-        <section class="event__section  event__section--destination">
-          <h3 class="event__section-title  event__section-title--destination">Destination</h3>
-          <p class="event__destination-description">Geneva is a city in Switzerland that lies at the southern tip of expansive Lac Léman (Lake Geneva). Surrounded by the Alps and Jura mountains, the city has views of dramatic Mont Blanc.</p>
-
-          <div class="event__photos-container">
-            <div class="event__photos-tape">
-              <img class="event__photo" src="img/photos/1.jpg" alt="Event photo">
-              <img class="event__photo" src="img/photos/2.jpg" alt="Event photo">
-              <img class="event__photo" src="img/photos/3.jpg" alt="Event photo">
-              <img class="event__photo" src="img/photos/4.jpg" alt="Event photo">
-              <img class="event__photo" src="img/photos/5.jpg" alt="Event photo">
-            </div>
-          </div>
-        </section>
+        ${offersTemplate}
+        ${cityInfoTemplate}
       </section>
-    </form>`
-  );
+    </form>`;
 };
