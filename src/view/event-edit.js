@@ -1,5 +1,16 @@
 import {EVENT_OFFERS, eventTypeToOffers, CITIES, EVENT_TYPES, TRANSFER_EVENTS} from "../const.js";
-import {capitalize, createPreposition} from "../util.js";
+import {capitalize, createPreposition, createElement} from "../util.js";
+
+const BLANK_EVENT = {
+  type: `bus`,
+  destination: ``,
+  cityInfo: null,
+  startDate: null,
+  endDate: null,
+  price: ``,
+  offers: null,
+  isFavorite: false
+};
 
 // Возвращает текущую дату
 const generateDate = () => {
@@ -116,19 +127,9 @@ const createOffersTemplate = (type, selectedOffers) => {
   </section>`;
 };
 
-
 // Возвращает шаблон формы редактирования/создания точки маршрута
-export const createEventEditFormTemplate = (tripEvent = {}) => {
-  const {
-    type = `bus`,
-    destination = ``,
-    cityInfo = null,
-    startDate = null,
-    endDate = null,
-    price = ``,
-    offers = null,
-    isFavorite = false
-  } = tripEvent;
+const createEventEditFormTemplate = (tripEvent) => {
+  const {type, destination, cityInfo, startDate, endDate, price, offers, isFavorite} = tripEvent;
 
   const eventTypeListTemplate = createEventTypeTemplate(type);
   const destinationTemplate = createDestinationTemplate(destination, type);
@@ -183,3 +184,26 @@ export const createEventEditFormTemplate = (tripEvent = {}) => {
       </section>
     </form>`;
 };
+
+export default class EventEditView {
+  constructor(tripEvent = BLANK_EVENT) {
+    this._event = tripEvent;
+    this._element = null;
+  }
+
+  getTemplate() {
+    return createEventEditFormTemplate(this._event);
+  }
+
+  getElement() {
+    if (!this._element) {
+      this._element = createElement(this.getTemplate());
+    }
+
+    return this._element;
+  }
+
+  removeElement() {
+    this._element = null;
+  }
+}

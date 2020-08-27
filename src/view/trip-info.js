@@ -1,4 +1,4 @@
-import {createShortDate} from "../util.js";
+import {createShortDate, createElement} from "../util.js";
 
 // Возвращает шаблон блока маршрута путешествия
 const createRouteTemplate = (route) => {
@@ -36,7 +36,7 @@ const createDatesTemplate = (startDate, endDate) => {
 
 
 // Возвращает шаблон блока информации о маршруте
-export const createTripInfoTemplate = (tripInfo) => {
+const createTripInfoTemplate = (tripInfo) => {
   const {route, startDate, endDate, cost} = tripInfo;
   const datesTemplate = createDatesTemplate(startDate, endDate);
   const routeTemplate = createRouteTemplate(route);
@@ -51,3 +51,26 @@ export const createTripInfoTemplate = (tripInfo) => {
     </p>
   </section>`;
 };
+
+export default class TripInfoView {
+  constructor(tripInfo) {
+    this._info = tripInfo;
+    this._element = null;
+  }
+
+  getTemplate() {
+    return createTripInfoTemplate(this._info);
+  }
+
+  getElement() {
+    if (!this._element) {
+      this._element = createElement(this.getTemplate());
+    }
+
+    return this._element;
+  }
+
+  removeElement() {
+    this._element = null;
+  }
+}
