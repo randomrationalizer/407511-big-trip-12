@@ -1,4 +1,4 @@
-import {capitalize} from "../util.js";
+import {capitalize, createElement} from "../util.js";
 import {SORT_BY_DEFAULT} from "../const.js";
 
 // Возвращает шаблон одного элемента сортировки
@@ -17,9 +17,8 @@ const createEventSortItemTemplate = (sortItem) => {
   </div>`;
 };
 
-
 // Возвращает шаблон блока сортировки точек маршрута
-export const createEventSortTemplate = (sort) => {
+const createEventSortTemplate = (sort) => {
   const sortItemsTemplate = sort.map((sortItem) => createEventSortItemTemplate(sortItem)).join(``);
 
   return `<form class="trip-events__trip-sort  trip-sort" action="#" method="get">
@@ -28,3 +27,26 @@ export const createEventSortTemplate = (sort) => {
       <span class="trip-sort__item  trip-sort__item--offers">Offers</span>
     </form>`;
 };
+
+export default class SortView {
+  constructor(sort) {
+    this._sort = sort;
+    this._element = null;
+  }
+
+  getTemplate() {
+    return createEventSortTemplate(this._sort);
+  }
+
+  getElement() {
+    if (!this._element) {
+      this._element = createElement(this.getTemplate());
+    }
+
+    return this._element;
+  }
+
+  removeElement() {
+    this._element = null;
+  }
+}

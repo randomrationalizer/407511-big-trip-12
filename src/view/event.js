@@ -1,4 +1,4 @@
-import {capitalize, formatDateToIso, createPreposition} from "../util.js";
+import {capitalize, formatDateToIso, createPreposition, createElement} from "../util.js";
 
 // Возвращает длительность события в формате: "1D 1H 10M"
 const calculatetimeDiff = (start, end) => {
@@ -31,9 +31,8 @@ const createOffersTemplate = (offers) => {
     </ul>`;
 };
 
-
 // Возвращает шаблон точки маршрута
-export const createEventTemplate = (tripEvent) => {
+const createEventTemplate = (tripEvent) => {
   const {type, destination, startDate, endDate, price, offers} = tripEvent;
 
   const startTime = startDate.toLocaleTimeString().slice(0, -3);
@@ -69,3 +68,26 @@ export const createEventTemplate = (tripEvent) => {
       </div>
     </li>`;
 };
+
+export default class EventView {
+  constructor(tripEvent) {
+    this._event = tripEvent;
+    this._element = null;
+  }
+
+  getTemplate() {
+    return createEventTemplate(this._event);
+  }
+
+  getElement() {
+    if (!this._element) {
+      this._element = createElement(this.getTemplate());
+    }
+
+    return this._element;
+  }
+
+  removeElement() {
+    this._element = null;
+  }
+}

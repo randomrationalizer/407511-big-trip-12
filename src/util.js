@@ -1,5 +1,35 @@
 import {TRANSFER_EVENTS} from "./const.js";
 
+// Перечисление позиций отрисовки элемента
+export const RenderPosition = {
+  AFTERBEGIN: `afterbegin`,
+  BEFOREEND: `beforeend`,
+  AFTEREND: `afterend`
+};
+
+// Отрисовывает элемент на странице
+export const render = (container, element, place) => {
+  switch (place) {
+    case RenderPosition.AFTERBEGIN:
+      container.prepend(element);
+      break;
+    case RenderPosition.BEFOREEND:
+      container.append(element);
+      break;
+    case RenderPosition.AFTEREND:
+      container.insertAdjacentElement(place, element);
+      break;
+  }
+};
+
+// Возвращает DOM-элемент из шаблона
+export const createElement = (template) => {
+  let newElement = document.createElement(`div`);
+  newElement.innerHTML = template;
+
+  return newElement.firstChild;
+};
+
 // Возвращает строку с заглавной первой буквой
 export const capitalize = (str) => {
   return str.charAt(0).toUpperCase() + str.slice(1);
