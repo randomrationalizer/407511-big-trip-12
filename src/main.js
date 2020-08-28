@@ -8,6 +8,7 @@ import EventsListView from "./view/events-list.js";
 import EventView from "./view/event.js";
 import EventEditView from "./view/event-edit.js";
 import {generateEvent} from "./mock/event.js";
+import NoEventsView from "./view/no-events.js";
 import {generateFilters} from "./mock/filter.js";
 import {generateSort} from "./mock/sort.js";
 import {generateDays} from "./mock/days.js";
@@ -45,6 +46,14 @@ const renderEvent = (eventsListElement, tripEvent) => {
 
   render(eventsListElement, eventComponent.getElement(), RenderPosition.BEFOREEND);
 
+  const onEscKeyDown = (evt) => {
+    if (evt.key === `Escape` || evt.key === `Esc`) {
+      evt.preventDefault();
+      replaceFormToEvent();
+      document.removeEventListener(`keydown`, onEscKeyDown);
+    }
+  };
+
   const replaceEventToForm = () => {
     eventsListElement.replaceChild(eventEditComponent.getElement(), eventComponent.getElement());
   };
@@ -55,11 +64,13 @@ const renderEvent = (eventsListElement, tripEvent) => {
 
   eventComponent.getElement().querySelector(`.event__rollup-btn`).addEventListener(`click`, () => {
     replaceEventToForm();
+    document.addEventListener(`keydown`, onEscKeyDown);
   });
 
   eventEditComponent.getElement().addEventListener(`submit`, (evt) => {
     evt.preventDefault();
     replaceFormToEvent();
+    document.removeEventListener(`keydown`, onEscKeyDown);
   });
 };
 
@@ -107,9 +118,12 @@ render(tripControlsElement, new FilterView(filters).getElement(), RenderPosition
 // Отрисовка информации о маршруте и стоимости путшествия
 render(tripMainElement, new TripInfoView(tripInfo).getElement(), RenderPosition.AFTERBEGIN);
 
-// Отрисовка блока сортировки точек маршрута
 const tripEventsContainerElement = document.querySelector(`.trip-events`);
-render(tripEventsContainerElement, new SortView(sort).getElement(), RenderPosition.BEFOREEND);
 
-// Отрисовка точек маршрута
-renderTrip(days, filteredEvents);
+// Отрисовка точек маршрута. В случае отсутствия точек маршрута, вместо списка отображается заглушка: «Click New Event to create your first point»
+if (tripEvents.length === 0) {
+  render(tripEventsContainerElement, new NoEventsView().getElement(), RenderPosition.BEFOREEND);
+} else {
+  render(tripEventsContainerElement, new SortView(sort).getElement(), RenderPosition.BEFOREEND);
+  renderTrip(days, filteredEvents);
+}

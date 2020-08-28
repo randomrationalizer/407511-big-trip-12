@@ -21,7 +21,7 @@ const eventToFilterMap = {
 };
 
 // Создаёт данные фильтра - массив объектов с именем фильтра и массивом отфильтрованных событий
-export const generateFilters = (tripEvents) => {
+export const generateFilters = (tripEvents = []) => {
   return Object.entries(eventToFilterMap).map(([filter, filterEvents]) => {
     return {
       name: filter,
