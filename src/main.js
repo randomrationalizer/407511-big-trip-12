@@ -38,6 +38,10 @@ const days = activeSort.name === SORT_BY_DEFAULT ? generateDays(filteredEvents) 
 const sortedByDateEvents = sort.find((sortItem) => sortItem.name === SORT_BY_DEFAULT).sortedEvents;
 const tripInfo = createTripInfo(sortedByDateEvents);
 
+const tripMainElement = document.querySelector(`.trip-main`);
+const tripControlsElement = tripMainElement.querySelector(`.trip-controls`);
+const tripControlsFirstHeadingElement = tripControlsElement.querySelector(`h2`);
+const tripEventsContainerElement = document.querySelector(`.trip-events`);
 
 // Отрисовывает точку маршрута
 const renderEvent = (eventsListElement, tripEvent) => {
@@ -74,40 +78,48 @@ const renderEvent = (eventsListElement, tripEvent) => {
   });
 };
 
-// Отрисовывает список точек маршрута
-const renderEventsList = (container, events) => {
-  const eventsListComponent = new EventsListView();
-  render(container, eventsListComponent.getElement(), RenderPosition.BEFOREEND);
+// Отрисовывает точки маршрута и дни путешествия
+const renderTrip = (tripContainer, tripDays, tripPoints) => {
 
-  for (let i = 0; i < events.length; i++) {
-    renderEvent(eventsListComponent.getElement(), events[i]);
+  // В случае отсутствия точек маршрута, вместо списка отображается заглушка
+  if (tripPoints.length === 0) {
+    render(tripContainer, new NoEventsView().getElement(), RenderPosition.BEFOREEND);
+    return;
   }
-};
 
-// Отрисовывает точки событий по умолчанию - с разбивкой по дням
-const renderEventsByDays = (container, tripDays) => {
-  for (let i = 0; i < tripDays.length; i++) {
-    const dayComponent = new DayView(tripDays[i], i);
-    render(container, dayComponent.getElement(), RenderPosition.BEFOREEND);
-    renderEventsList(dayComponent.getElement(), tripDays[i].dayEvents);
-  }
-};
-
-// Отрисовывает точки маршрута путешествия в зависимости от выбранного типа представления
-const renderTrip = (tripDays, events) => {
   const daysListComponent = new DaysListView(tripDays);
-  render(tripEventsContainerElement, daysListComponent.getElement(), RenderPosition.BEFOREEND);
+
+  // Отрисовка сортировки
+  render(tripContainer, new SortView(sort).getElement(), RenderPosition.BEFOREEND);
+
+  // Отрисовка списка дней
+  render(tripContainer, daysListComponent.getElement(), RenderPosition.BEFOREEND);
+
+  // Отрисовывает список точек маршрута
+  const renderEventsList = (eventsContainer, events) => {
+    const eventsListComponent = new EventsListView();
+    render(eventsContainer, eventsListComponent.getElement(), RenderPosition.BEFOREEND);
+
+    for (let i = 0; i < events.length; i++) {
+      renderEvent(eventsListComponent.getElement(), events[i]);
+    }
+  };
+
+  // Отрисовывает точки событий с разбивкой по дням
+  const renderEventsByDays = (eventsContainer, daysOfTrip) => {
+    for (let i = 0; i < daysOfTrip.length; i++) {
+      const dayComponent = new DayView(daysOfTrip[i], i);
+      render(eventsContainer, dayComponent.getElement(), RenderPosition.BEFOREEND);
+      renderEventsList(dayComponent.getElement(), daysOfTrip[i].dayEvents);
+    }
+  };
 
   if (tripDays !== null) {
     renderEventsByDays(daysListComponent.getElement(), tripDays);
   } else {
-    renderEventsList(daysListComponent.getElement(), events);
+    renderEventsList(daysListComponent.getElement(), tripPoints);
   }
 };
-
-const tripMainElement = document.querySelector(`.trip-main`);
-const tripControlsElement = tripMainElement.querySelector(`.trip-controls`);
-const tripControlsFirstHeadingElement = tripControlsElement.querySelector(`h2`);
 
 // Отрисовка меню
 render(tripControlsFirstHeadingElement, new MenuView().getElement(), RenderPosition.AFTEREND);
@@ -118,12 +130,5 @@ render(tripControlsElement, new FilterView(filters).getElement(), RenderPosition
 // Отрисовка информации о маршруте и стоимости путшествия
 render(tripMainElement, new TripInfoView(tripInfo).getElement(), RenderPosition.AFTERBEGIN);
 
-const tripEventsContainerElement = document.querySelector(`.trip-events`);
-
-// Отрисовка точек маршрута. В случае отсутствия точек маршрута, вместо списка отображается заглушка: «Click New Event to create your first point»
-if (tripEvents.length === 0) {
-  render(tripEventsContainerElement, new NoEventsView().getElement(), RenderPosition.BEFOREEND);
-} else {
-  render(tripEventsContainerElement, new SortView(sort).getElement(), RenderPosition.BEFOREEND);
-  renderTrip(days, filteredEvents);
-}
+// Отрисовка дней и точек путешествия
+renderTrip(tripEventsContainerElement, days, filteredEvents);
