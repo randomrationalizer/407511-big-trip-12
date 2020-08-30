@@ -9,7 +9,7 @@ const sortToFilterMap = {
 
 
 // Создаёт данные сортировки - массив объектов с именем сортировки и массивом отсортированных событий
-export const generateSort = (tripEvents) => {
+export const generateSort = (tripEvents = []) => {
   return Object.entries(sortToFilterMap).map(([sort, sortEvents]) => {
     return {
       name: sort,

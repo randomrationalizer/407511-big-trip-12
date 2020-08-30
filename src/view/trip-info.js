@@ -37,19 +37,27 @@ const createDatesTemplate = (startDate, endDate) => {
 
 // Возвращает шаблон блока информации о маршруте
 const createTripInfoTemplate = (tripInfo) => {
-  const {route, startDate, endDate, cost} = tripInfo;
-  const datesTemplate = createDatesTemplate(startDate, endDate);
-  const routeTemplate = createRouteTemplate(route);
+  if (tripInfo === null) {
+    return `<section class="trip-main__trip-info  trip-info">
+      <p class="trip-info__cost">
+        Total: &euro;&nbsp;<span class="trip-info__cost-value">0</span>
+      </p>
+    </section>`;
+  } else {
+    const {route, startDate, endDate, cost} = tripInfo;
+    const datesTemplate = createDatesTemplate(startDate, endDate);
+    const routeTemplate = createRouteTemplate(route);
 
-  return `<section class="trip-main__trip-info  trip-info">
-    <div class="trip-info__main">
-      ${routeTemplate}
-      ${datesTemplate}
-    </div>
-    <p class="trip-info__cost">
-      Total: &euro;&nbsp;<span class="trip-info__cost-value">${cost}</span>
-    </p>
-  </section>`;
+    return `<section class="trip-main__trip-info  trip-info">
+      <div class="trip-info__main">
+        ${routeTemplate}
+        ${datesTemplate}
+      </div>
+      <p class="trip-info__cost">
+        Total: &euro;&nbsp;<span class="trip-info__cost-value">${cost}</span>
+      </p>
+    </section>`;
+  }
 };
 
 export default class TripInfoView {
