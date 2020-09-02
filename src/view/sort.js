@@ -1,5 +1,6 @@
-import {capitalize, createElement} from "../util.js";
+import {capitalize} from "../util.js";
 import {SORT_BY_DEFAULT} from "../const.js";
+import AbstractView from "./abstract.js";
 
 // Возвращает шаблон одного элемента сортировки
 const createEventSortItemTemplate = (sortItem) => {
@@ -28,25 +29,13 @@ const createEventSortTemplate = (sort) => {
     </form>`;
 };
 
-export default class SortView {
+export default class SortView extends AbstractView {
   constructor(sort) {
+    super();
     this._sort = sort;
-    this._element = null;
   }
 
   getTemplate() {
     return createEventSortTemplate(this._sort);
-  }
-
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
-  }
-
-  removeElement() {
-    this._element = null;
   }
 }

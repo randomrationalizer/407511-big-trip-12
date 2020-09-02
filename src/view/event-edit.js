@@ -1,5 +1,6 @@
 import {EVENT_OFFERS, eventTypeToOffers, CITIES, EVENT_TYPES, TRANSFER_EVENTS} from "../const.js";
-import {capitalize, createPreposition, createElement} from "../util.js";
+import {capitalize, createPreposition} from "../util.js";
+import AbstractView from "./abstract.js";
 
 const BLANK_EVENT = {
   type: `bus`,
@@ -185,25 +186,13 @@ const createEventEditFormTemplate = (tripEvent) => {
     </form>`;
 };
 
-export default class EventEditView {
+export default class EventEditView extends AbstractView {
   constructor(tripEvent = BLANK_EVENT) {
+    super();
     this._event = tripEvent;
-    this._element = null;
   }
 
   getTemplate() {
     return createEventEditFormTemplate(this._event);
-  }
-
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
-  }
-
-  removeElement() {
-    this._element = null;
   }
 }

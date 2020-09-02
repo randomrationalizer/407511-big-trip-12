@@ -1,4 +1,5 @@
-import {createShortDate, createElement} from "../util.js";
+import {createShortDate} from "../util.js";
+import AbstractView from "./abstract.js";
 
 // Возвращает шаблон блока дня путешествия
 const createDayTemplate = (day, dayIndex) => {
@@ -13,26 +14,14 @@ const createDayTemplate = (day, dayIndex) => {
     </li>`;
 };
 
-export default class DayView {
+export default class DayView extends AbstractView {
   constructor(day, dayIndex) {
+    super();
     this._dayIndex = dayIndex;
     this._day = day;
-    this._element = null;
   }
 
   getTemplate() {
     return createDayTemplate(this._day, this._dayIndex);
-  }
-
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
-  }
-
-  removeElement() {
-    this._element = null;
   }
 }

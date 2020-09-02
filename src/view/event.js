@@ -1,4 +1,5 @@
-import {capitalize, formatDateToIso, createPreposition, createElement} from "../util.js";
+import {capitalize, formatDateToIso, createPreposition} from "../util.js";
+import AbstractView from "./abstract.js";
 
 // Возвращает длительность события в формате: "1D 1H 10M"
 const calculatetimeDiff = (start, end) => {
@@ -69,25 +70,13 @@ const createEventTemplate = (tripEvent) => {
     </li>`;
 };
 
-export default class EventView {
+export default class EventView extends AbstractView {
   constructor(tripEvent) {
+    super();
     this._event = tripEvent;
-    this._element = null;
   }
 
   getTemplate() {
     return createEventTemplate(this._event);
-  }
-
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
-  }
-
-  removeElement() {
-    this._element = null;
   }
 }

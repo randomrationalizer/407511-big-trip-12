@@ -1,4 +1,5 @@
-import {capitalize, createElement} from "../util.js";
+import {capitalize} from "../util.js";
+import AbstractView from "./abstract.js";
 
 // Возвращает шаблон одного элемента фильтра
 const createFilterItemTemplate = (filter) => {
@@ -20,25 +21,13 @@ const createFilterTemplate = (filters) => {
     </form>`;
 };
 
-export default class FilterView {
+export default class FilterView extends AbstractView {
   constructor(filters) {
+    super();
     this._filters = filters;
-    this._element = null;
   }
 
   getTemplate() {
     return createFilterTemplate(this._filters);
-  }
-
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
-  }
-
-  removeElement() {
-    this._element = null;
   }
 }
