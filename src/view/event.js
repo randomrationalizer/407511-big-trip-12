@@ -1,4 +1,5 @@
-import {capitalize, formatDateToIso, createPreposition} from "../util.js";
+import {formatDateToIso, createPreposition} from "../utils/event.js";
+import {capitalize} from "../utils/common.js";
 import AbstractView from "./abstract.js";
 
 // Возвращает длительность события в формате: "1D 1H 10M"

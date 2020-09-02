@@ -51,7 +51,7 @@ export const EVENT_OFFERS = [
   },
 
   {
-    type: `breackfast`,
+    type: `breakfast`,
     title: `Add breakfast`,
     price: 50
   },
@@ -78,7 +78,7 @@ export const eventTypeToOffers = {
   "transport": null,
   "drive": [`rent`],
   "flight": [`luggage`, `comfort`, `meal`, `seats`, `train`],
-  "check-in": [`breackfast`],
+  "check-in": [`breakfast`],
   "sightseeing": [`tickets`, `lunch`],
   "restaurant": null
 };

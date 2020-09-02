@@ -1,4 +1,4 @@
-import {capitalize} from "../util.js";
+import {capitalize} from "../utils/common.js";
 import AbstractView from "./abstract.js";
 
 // Возвращает шаблон одного элемента фильтра

@@ -14,7 +14,7 @@ import {generateSort} from "./mock/sort.js";
 import {generateDays} from "./mock/days.js";
 import {createTripInfo} from "./mock/trip-info.js";
 import {SORT_BY_DEFAULT} from "./const.js";
-import {RenderPosition, render} from "./util.js";
+import {RenderPosition, render, replace} from "./utils/render.js";
 
 const EVENT_COUNT = 10;
 
@@ -34,7 +34,7 @@ const filteredEvents = activeFilter.filteredEvents;
 // Массив дней маршрута
 const days = activeSort.name === SORT_BY_DEFAULT ? generateDays(filteredEvents) : null;
 
-// Иформация о путешествии
+// Информация о путешествии
 const sortedByDateEvents = sort.find((sortItem) => sortItem.name === SORT_BY_DEFAULT).sortedEvents;
 const tripInfo = createTripInfo(sortedByDateEvents);
 
@@ -48,7 +48,7 @@ const renderEvent = (eventsListElement, tripEvent) => {
   const eventComponent = new EventView(tripEvent);
   const eventEditComponent = new EventEditView(tripEvent);
 
-  render(eventsListElement, eventComponent.getElement(), RenderPosition.BEFOREEND);
+  render(eventsListElement, eventComponent, RenderPosition.BEFOREEND);
 
   const onEscKeyDown = (evt) => {
     if (evt.key === `Escape` || evt.key === `Esc`) {
@@ -59,11 +59,11 @@ const renderEvent = (eventsListElement, tripEvent) => {
   };
 
   const replaceEventToForm = () => {
-    eventsListElement.replaceChild(eventEditComponent.getElement(), eventComponent.getElement());
+    replace(eventEditComponent, eventComponent);
   };
 
   const replaceFormToEvent = () => {
-    eventsListElement.replaceChild(eventComponent.getElement(), eventEditComponent.getElement());
+    replace(eventComponent, eventEditComponent);
   };
 
   eventComponent.getElement().querySelector(`.event__rollup-btn`).addEventListener(`click`, () => {
@@ -83,25 +83,25 @@ const renderTrip = (tripContainer, tripDays, tripPoints) => {
 
   // В случае отсутствия точек маршрута, вместо списка отображается заглушка
   if (tripPoints.length === 0) {
-    render(tripContainer, new NoEventsView().getElement(), RenderPosition.BEFOREEND);
+    render(tripContainer, new NoEventsView(), RenderPosition.BEFOREEND);
     return;
   }
 
   const daysListComponent = new DaysListView(tripDays);
 
   // Отрисовка сортировки
-  render(tripContainer, new SortView(sort).getElement(), RenderPosition.BEFOREEND);
+  render(tripContainer, new SortView(sort), RenderPosition.BEFOREEND);
 
   // Отрисовка списка дней
-  render(tripContainer, daysListComponent.getElement(), RenderPosition.BEFOREEND);
+  render(tripContainer, daysListComponent, RenderPosition.BEFOREEND);
 
   // Отрисовывает список точек маршрута
   const renderEventsList = (eventsContainer, events) => {
     const eventsListComponent = new EventsListView();
-    render(eventsContainer, eventsListComponent.getElement(), RenderPosition.BEFOREEND);
+    render(eventsContainer, eventsListComponent, RenderPosition.BEFOREEND);
 
     for (let i = 0; i < events.length; i++) {
-      renderEvent(eventsListComponent.getElement(), events[i]);
+      renderEvent(eventsListComponent, events[i]);
     }
   };
 
@@ -109,26 +109,26 @@ const renderTrip = (tripContainer, tripDays, tripPoints) => {
   const renderEventsByDays = (eventsContainer, daysOfTrip) => {
     for (let i = 0; i < daysOfTrip.length; i++) {
       const dayComponent = new DayView(daysOfTrip[i], i);
-      render(eventsContainer, dayComponent.getElement(), RenderPosition.BEFOREEND);
-      renderEventsList(dayComponent.getElement(), daysOfTrip[i].dayEvents);
+      render(eventsContainer, dayComponent, RenderPosition.BEFOREEND);
+      renderEventsList(dayComponent, daysOfTrip[i].dayEvents);
     }
   };
 
   if (tripDays !== null) {
-    renderEventsByDays(daysListComponent.getElement(), tripDays);
+    renderEventsByDays(daysListComponent, tripDays);
   } else {
-    renderEventsList(daysListComponent.getElement(), tripPoints);
+    renderEventsList(daysListComponent, tripPoints);
   }
 };
 
 // Отрисовка меню
-render(tripControlsFirstHeadingElement, new MenuView().getElement(), RenderPosition.AFTEREND);
+render(tripControlsFirstHeadingElement, new MenuView(), RenderPosition.AFTEREND);
 
 // Отрисовка блока фильтрации точек маршрута
-render(tripControlsElement, new FilterView(filters).getElement(), RenderPosition.BEFOREEND);
+render(tripControlsElement, new FilterView(filters), RenderPosition.BEFOREEND);
 
 // Отрисовка информации о маршруте и стоимости путшествия
-render(tripMainElement, new TripInfoView(tripInfo).getElement(), RenderPosition.AFTERBEGIN);
+render(tripMainElement, new TripInfoView(tripInfo), RenderPosition.AFTERBEGIN);
 
 // Отрисовка дней и точек путешествия
 renderTrip(tripEventsContainerElement, days, filteredEvents);

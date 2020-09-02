@@ -1,4 +1,4 @@
-import {capitalize} from "../util.js";
+import {capitalize} from "../utils/common.js";
 import {SORT_BY_DEFAULT} from "../const.js";
 import AbstractView from "./abstract.js";
 

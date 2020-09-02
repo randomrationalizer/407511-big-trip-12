@@ -1,4 +1,4 @@
-import {createShortDate} from "../util.js";
+import {createShortDate} from "../utils/event.js";
 import AbstractView from "./abstract.js";
 
 // Возвращает шаблон блока дня путешествия
