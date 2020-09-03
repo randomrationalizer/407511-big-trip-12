@@ -1,5 +1,7 @@
 import {EVENT_OFFERS, eventTypeToOffers, CITIES, EVENT_TYPES, TRANSFER_EVENTS} from "../const.js";
-import {capitalize, createPreposition, createElement} from "../util.js";
+import {createPreposition} from "../utils/event.js";
+import {capitalize} from "../utils/common.js";
+import AbstractView from "./abstract.js";
 
 const BLANK_EVENT = {
   type: `bus`,
@@ -14,9 +16,9 @@ const BLANK_EVENT = {
 
 // Возвращает текущую дату
 const generateDate = () => {
-  const curentDate = new Date();
-  curentDate.setHours(0, 0);
-  return new Date(curentDate);
+  const currentDate = new Date();
+  currentDate.setHours(0, 0);
+  return new Date(currentDate);
 };
 
 // Возвращает дату в виде строки в формате: "день/месяц/год часы:минуты"
@@ -25,7 +27,7 @@ const humanizeDate = (date) => {
 };
 
 // Возвращает шаблон элемента списка типов точки маршрута
-const createEvetnTypeItemTemplates = (types, selectedType) => {
+const createEventTypeItemTemplates = (types, selectedType) => {
   return `${types.map((type) => `<div class="event__type-item">
     <input id="event-type-taxi-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${type}" ${type === selectedType ? `checked` : ``}>
     <label class="event__type-label  event__type-label--${type}" for="event-type-${type}">${capitalize(type)}</label>
@@ -40,12 +42,12 @@ const createEventTypeTemplate = (selectedType) => {
     <fieldset class="event__type-group">
       <legend class="visually-hidden">Transfer</legend>
 
-      ${createEvetnTypeItemTemplates(TRANSFER_EVENTS, selectedType)}
+      ${createEventTypeItemTemplates(TRANSFER_EVENTS, selectedType)}
 
     <fieldset class="event__type-group">
       <legend class="visually-hidden">Activity</legend>
 
-      ${createEvetnTypeItemTemplates(activityEvents, selectedType)}
+      ${createEventTypeItemTemplates(activityEvents, selectedType)}
 
     </fieldset>
   </div>`;
@@ -185,25 +187,24 @@ const createEventEditFormTemplate = (tripEvent) => {
     </form>`;
 };
 
-export default class EventEditView {
+export default class EventEditView extends AbstractView {
   constructor(tripEvent = BLANK_EVENT) {
+    super();
     this._event = tripEvent;
-    this._element = null;
+    this._formSubmitHandler = this._formSubmitHandler.bind(this);
   }
 
   getTemplate() {
     return createEventEditFormTemplate(this._event);
   }
 
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
+  _formSubmitHandler(evt) {
+    evt.preventDefault();
+    this._callback.formSubmit();
   }
 
-  removeElement() {
-    this._element = null;
+  setFormSubmitHandler(callback) {
+    this._callback.formSubmit = callback;
+    this.getElement().addEventListener(`submit`, this._formSubmitHandler);
   }
 }

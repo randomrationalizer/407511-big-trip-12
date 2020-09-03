@@ -1,20 +1,13 @@
 import TripInfoView from "./view/trip-info.js";
 import MenuView from "./view/menu.js";
 import FilterView from "./view/filter.js";
-import SortView from "./view/sort.js";
-import DaysListView from "./view/days-list.js";
-import DayView from "./view/day.js";
-import EventsListView from "./view/events-list.js";
-import EventView from "./view/event.js";
-import EventEditView from "./view/event-edit.js";
 import {generateEvent} from "./mock/event.js";
-import NoEventsView from "./view/no-events.js";
 import {generateFilters} from "./mock/filter.js";
 import {generateSort} from "./mock/sort.js";
-import {generateDays} from "./mock/days.js";
 import {createTripInfo} from "./mock/trip-info.js";
 import {SORT_BY_DEFAULT} from "./const.js";
-import {RenderPosition, render} from "./util.js";
+import {RenderPosition, render} from "./utils/render.js";
+import Trip from "./presenter/trip.js";
 
 const EVENT_COUNT = 10;
 
@@ -31,104 +24,24 @@ const filters = generateFilters(sortedEvents);
 const activeFilter = filters.find((filter) => filter.isActive);
 const filteredEvents = activeFilter.filteredEvents;
 
-// Массив дней маршрута
-const days = activeSort.name === SORT_BY_DEFAULT ? generateDays(filteredEvents) : null;
-
-// Иформация о путешествии
+// Информация о путешествии
 const sortedByDateEvents = sort.find((sortItem) => sortItem.name === SORT_BY_DEFAULT).sortedEvents;
 const tripInfo = createTripInfo(sortedByDateEvents);
 
 const tripMainElement = document.querySelector(`.trip-main`);
 const tripControlsElement = tripMainElement.querySelector(`.trip-controls`);
 const tripControlsFirstHeadingElement = tripControlsElement.querySelector(`h2`);
-const tripEventsContainerElement = document.querySelector(`.trip-events`);
-
-// Отрисовывает точку маршрута
-const renderEvent = (eventsListElement, tripEvent) => {
-  const eventComponent = new EventView(tripEvent);
-  const eventEditComponent = new EventEditView(tripEvent);
-
-  render(eventsListElement, eventComponent.getElement(), RenderPosition.BEFOREEND);
-
-  const onEscKeyDown = (evt) => {
-    if (evt.key === `Escape` || evt.key === `Esc`) {
-      evt.preventDefault();
-      replaceFormToEvent();
-      document.removeEventListener(`keydown`, onEscKeyDown);
-    }
-  };
-
-  const replaceEventToForm = () => {
-    eventsListElement.replaceChild(eventEditComponent.getElement(), eventComponent.getElement());
-  };
-
-  const replaceFormToEvent = () => {
-    eventsListElement.replaceChild(eventComponent.getElement(), eventEditComponent.getElement());
-  };
-
-  eventComponent.getElement().querySelector(`.event__rollup-btn`).addEventListener(`click`, () => {
-    replaceEventToForm();
-    document.addEventListener(`keydown`, onEscKeyDown);
-  });
-
-  eventEditComponent.getElement().addEventListener(`submit`, (evt) => {
-    evt.preventDefault();
-    replaceFormToEvent();
-    document.removeEventListener(`keydown`, onEscKeyDown);
-  });
-};
-
-// Отрисовывает точки маршрута и дни путешествия
-const renderTrip = (tripContainer, tripDays, tripPoints) => {
-
-  // В случае отсутствия точек маршрута, вместо списка отображается заглушка
-  if (tripPoints.length === 0) {
-    render(tripContainer, new NoEventsView().getElement(), RenderPosition.BEFOREEND);
-    return;
-  }
-
-  const daysListComponent = new DaysListView(tripDays);
-
-  // Отрисовка сортировки
-  render(tripContainer, new SortView(sort).getElement(), RenderPosition.BEFOREEND);
-
-  // Отрисовка списка дней
-  render(tripContainer, daysListComponent.getElement(), RenderPosition.BEFOREEND);
-
-  // Отрисовывает список точек маршрута
-  const renderEventsList = (eventsContainer, events) => {
-    const eventsListComponent = new EventsListView();
-    render(eventsContainer, eventsListComponent.getElement(), RenderPosition.BEFOREEND);
-
-    for (let i = 0; i < events.length; i++) {
-      renderEvent(eventsListComponent.getElement(), events[i]);
-    }
-  };
-
-  // Отрисовывает точки событий с разбивкой по дням
-  const renderEventsByDays = (eventsContainer, daysOfTrip) => {
-    for (let i = 0; i < daysOfTrip.length; i++) {
-      const dayComponent = new DayView(daysOfTrip[i], i);
-      render(eventsContainer, dayComponent.getElement(), RenderPosition.BEFOREEND);
-      renderEventsList(dayComponent.getElement(), daysOfTrip[i].dayEvents);
-    }
-  };
-
-  if (tripDays !== null) {
-    renderEventsByDays(daysListComponent.getElement(), tripDays);
-  } else {
-    renderEventsList(daysListComponent.getElement(), tripPoints);
-  }
-};
+const tripContainerElement = document.querySelector(`.trip-events`);
 
 // Отрисовка меню
-render(tripControlsFirstHeadingElement, new MenuView().getElement(), RenderPosition.AFTEREND);
+render(tripControlsFirstHeadingElement, new MenuView(), RenderPosition.AFTEREND);
 
 // Отрисовка блока фильтрации точек маршрута
-render(tripControlsElement, new FilterView(filters).getElement(), RenderPosition.BEFOREEND);
+render(tripControlsElement, new FilterView(filters), RenderPosition.BEFOREEND);
 
 // Отрисовка информации о маршруте и стоимости путшествия
-render(tripMainElement, new TripInfoView(tripInfo).getElement(), RenderPosition.AFTERBEGIN);
+render(tripMainElement, new TripInfoView(tripInfo), RenderPosition.AFTERBEGIN);
 
 // Отрисовка дней и точек путешествия
-renderTrip(tripEventsContainerElement, days, filteredEvents);
+const tripPresenter = new Trip(tripContainerElement);
+tripPresenter.init(filteredEvents, sort);

@@ -1,4 +1,4 @@
-import {createElement} from "../util.js";
+import AbstractView from "./abstract.js";
 
 // Возвращает шаблон списка дней путешествия
 const createDaysListTemplate = (days) => {
@@ -10,25 +10,13 @@ const createDaysListTemplate = (days) => {
     </ul>`;
 };
 
-export default class DaysListView {
+export default class DaysListView extends AbstractView {
   constructor(days) {
+    super();
     this._days = days;
-    this._element = null;
   }
 
   getTemplate() {
     return createDaysListTemplate(this._days);
-  }
-
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
-  }
-
-  removeElement() {
-    this._element = null;
   }
 }

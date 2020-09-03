@@ -1,4 +1,6 @@
-import {capitalize, formatDateToIso, createPreposition, createElement} from "../util.js";
+import {formatDateToIso, createPreposition} from "../utils/event.js";
+import {capitalize} from "../utils/common.js";
+import AbstractView from "./abstract.js";
 
 // Возвращает длительность события в формате: "1D 1H 10M"
 const calculatetimeDiff = (start, end) => {
@@ -69,25 +71,24 @@ const createEventTemplate = (tripEvent) => {
     </li>`;
 };
 
-export default class EventView {
+export default class EventView extends AbstractView {
   constructor(tripEvent) {
+    super();
     this._event = tripEvent;
-    this._element = null;
+    this._rollupClickHandler = this._rollupClickHandler.bind(this);
   }
 
   getTemplate() {
     return createEventTemplate(this._event);
   }
 
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
+  _rollupClickHandler(evt) {
+    evt.preventDefault();
+    this._callback.rollupClick();
   }
 
-  removeElement() {
-    this._element = null;
+  setRollupClickHandler(callback) {
+    this._callback.rollupClick = callback;
+    this.getElement().querySelector(`.event__rollup-btn`).addEventListener(`click`, this._rollupClickHandler);
   }
 }

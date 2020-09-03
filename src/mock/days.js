@@ -1,6 +1,6 @@
-import {formatDateToIso} from "../util.js";
+import {formatDateToIso} from "../utils/event.js";
 
-// Возваращает дату в виде строки в формате: гггг-мм-дд
+// Возвращает дату в виде строки в формате: гггг-мм-дд
 const getFormatedDate = (date) => {
   return formatDateToIso(date).slice(0, 10);
 };

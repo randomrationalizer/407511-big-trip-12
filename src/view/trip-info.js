@@ -1,4 +1,5 @@
-import {createShortDate, createElement} from "../util.js";
+import {createShortDate} from "../utils/event.js";
+import AbstractView from "./abstract.js";
 
 // Возвращает шаблон блока маршрута путешествия
 const createRouteTemplate = (route) => {
@@ -60,25 +61,13 @@ const createTripInfoTemplate = (tripInfo) => {
   }
 };
 
-export default class TripInfoView {
+export default class TripInfoView extends AbstractView {
   constructor(tripInfo) {
+    super();
     this._info = tripInfo;
-    this._element = null;
   }
 
   getTemplate() {
     return createTripInfoTemplate(this._info);
-  }
-
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
-  }
-
-  removeElement() {
-    this._element = null;
   }
 }
