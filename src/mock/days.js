@@ -23,7 +23,6 @@ export const generateDays = (tripEvents) => {
 
     return {
       date,
-      count: matchEvents.length,
       dayEvents: matchEvents
     };
   });
