@@ -83,8 +83,12 @@ export const eventTypeToOffers = {
   "restaurant": null
 };
 
-// Сортировка по умолчанию - Event (разбивка по дням)
-export const SORT_BY_DEFAULT = `event`;
-
 // Фильтрация по умолчанию - Everything (все прошлые и будущие события)
 export const FILTER_BY_DEFAULT = `everything`;
+
+// Перечисление типов сортировки точек маршрута
+export const SortType = {
+  DEFAULT: `event`,
+  TIME_DOWN: `time`,
+  PRICE_DOWN: `price`
+};

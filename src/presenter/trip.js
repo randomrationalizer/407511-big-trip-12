@@ -1,4 +1,4 @@
-import {RenderPosition, render, replace} from "../utils/render.js";
+import {RenderPosition, render, replace, remove} from "../utils/render.js";
 import NoEventsView from "../view/no-events.js";
 import DaysListView from "../view/days-list.js";
 import SortView from "../view/sort.js";
@@ -6,8 +6,9 @@ import EventView from "../view/event.js";
 import EventEditView from "../view/event-edit.js";
 import DayView from "../view/day.js";
 import EventsListView from "../view/events-list.js";
-import {SORT_BY_DEFAULT} from "../const.js";
+import {SortType} from "../const.js";
 import {generateDays} from "../mock/days.js";
+import {sortByPrice, sortByTime, sortByDate} from "../utils/event.js";
 
 
 // Конструктор маршрута путешествия - создаёт, отрисовывает элементы, навешивает обработчики
@@ -15,24 +16,24 @@ export default class Trip {
   constructor(tripContainer) {
     this._tripContainer = tripContainer;
     this._noEventsComponent = new NoEventsView();
+    this._sortComponent = new SortView();
+    this._currentSort = SortType.DEFAULT;
+    this._daysListComponent = new DaysListView();
+    this._handleSortChange = this._handleSortChange.bind(this);
   }
 
-  init(events, sort) {
-    this._events = events.slice();
-    this._sort = sort.slice();
-    this._getDays();
+  init(events) {
+    this._sourcedEvents = events.slice().sort(sortByDate);
+    this._events = this._sourcedEvents.slice();
+
+    this._sourcedDays = generateDays(this._events);
+    this._days = this._sourcedDays.slice();
+
     this._renderSort();
     this._renderTrip();
   }
 
-  // Получает массив дней маршрута
-  _getDays() {
-    const activeSort = this._sort.find((sortItem) => sortItem.isActive);
-    this._days = activeSort.name === SORT_BY_DEFAULT ? generateDays(this._events) : null;
-  }
-
   _renderDaysList() {
-    this._daysListComponent = new DaysListView(this._days);
     render(this._tripContainer, this._daysListComponent, RenderPosition.BEFOREEND);
   }
 
@@ -40,9 +41,37 @@ export default class Trip {
     render(this._tripContainer, this._noEventsComponent, RenderPosition.BEFOREEND);
   }
 
+  _sortEvents(sortType) {
+    switch (sortType) {
+      case SortType.PRICE_DOWN:
+        this._events.sort(sortByPrice);
+        this._days = null;
+        break;
+      case SortType.TIME_DOWN:
+        this._events.sort(sortByTime);
+        this._days = null;
+        break;
+      default:
+        this._events = this._sourcedEvents.slice();
+        this._days = this._sourcedDays.slice();
+    }
+
+    this._currentSort = sortType;
+  }
+
+  _handleSortChange(sortType) {
+    if (sortType === this._currentSort) {
+      return;
+    }
+
+    this._sortEvents(sortType);
+    this._clearTrip();
+    this._renderTrip();
+  }
+
   _renderSort() {
-    const sortComponent = new SortView(this._sort);
-    render(this._tripContainer, sortComponent, RenderPosition.BEFOREEND);
+    render(this._tripContainer, this._sortComponent, RenderPosition.BEFOREEND);
+    this._sortComponent.setSortChangeHandler(this._handleSortChange);
   }
 
   // Отрисовывает точку маршрута
@@ -98,6 +127,10 @@ export default class Trip {
     }
   }
 
+  _clearTrip() {
+    remove(this._daysListComponent);
+  }
+
   // Отрисовывает все события и дни маршрута путешествия
   _renderTrip() {
     if (this._events.length === 0) {
@@ -110,7 +143,9 @@ export default class Trip {
     if (this._days !== null) {
       this._renderDays();
     } else {
-      this._renderEvents(this._daysListComponent, this._events);
+      const dayComponent = new DayView();
+      render(this._daysListComponent, dayComponent, RenderPosition.BEFOREEND);
+      this._renderEvents(dayComponent, this._events);
     }
   }
 }

@@ -20,3 +20,20 @@ export const createShortDate = (date) => {
 export const createPreposition = (type) => {
   return TRANSFER_EVENTS.includes(type) ? `to` : `in`;
 };
+
+// Сравнение для сортировки событий по убыванию стоимости
+export const sortByPrice = (first, second) => {
+  return second.price - first.price;
+};
+
+// Сравнение для сортировки событий по убыванию длительности
+export const sortByTime = (first, second) => {
+  const firstDuration = first.endDate.getTime() - first.startDate.getTime();
+  const secondDuration = second.endDate.getTime() - second.startDate.getTime();
+  return secondDuration - firstDuration;
+};
+
+// Сравнение для сортировки событий в хронологическом порядке
+export const sortByDate = (first, second) => {
+  return first.startDate.getTime() - second.startDate.getTime();
+};

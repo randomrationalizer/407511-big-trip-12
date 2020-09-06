@@ -3,29 +3,23 @@ import MenuView from "./view/menu.js";
 import FilterView from "./view/filter.js";
 import {generateEvent} from "./mock/event.js";
 import {generateFilters} from "./mock/filter.js";
-import {generateSort} from "./mock/sort.js";
 import {createTripInfo} from "./mock/trip-info.js";
-import {SORT_BY_DEFAULT} from "./const.js";
 import {RenderPosition, render} from "./utils/render.js";
 import Trip from "./presenter/trip.js";
+import {sortByDate} from "./utils/event.js";
 
-const EVENT_COUNT = 10;
+const EVENT_COUNT = 20;
 
 // Генерация случайных точек маршрута
 const tripEvents = new Array(EVENT_COUNT).fill().map(generateEvent);
 
-// Выбранный способ сортировки
-const sort = generateSort(tripEvents);
-const activeSort = sort.find((sortItem) => sortItem.isActive);
-const sortedEvents = activeSort.sortedEvents;
-
 // Выбранный фильтр
-const filters = generateFilters(sortedEvents);
+const filters = generateFilters(tripEvents);
 const activeFilter = filters.find((filter) => filter.isActive);
 const filteredEvents = activeFilter.filteredEvents;
 
 // Информация о путешествии
-const sortedByDateEvents = sort.find((sortItem) => sortItem.name === SORT_BY_DEFAULT).sortedEvents;
+const sortedByDateEvents = tripEvents.slice().sort(sortByDate);
 const tripInfo = createTripInfo(sortedByDateEvents);
 
 const tripMainElement = document.querySelector(`.trip-main`);
@@ -44,4 +38,4 @@ render(tripMainElement, new TripInfoView(tripInfo), RenderPosition.AFTERBEGIN);
 
 // Отрисовка дней и точек путешествия
 const tripPresenter = new Trip(tripContainerElement);
-tripPresenter.init(filteredEvents, sort);
+tripPresenter.init(filteredEvents);
