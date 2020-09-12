@@ -1,25 +1,30 @@
-import {RenderPosition, render, replace, remove} from "../utils/render.js";
+import {RenderPosition, render, remove} from "../utils/render.js";
 import NoEventsView from "../view/no-events.js";
 import DaysListView from "../view/days-list.js";
 import SortView from "../view/sort.js";
-import EventView from "../view/event.js";
-import EventEditView from "../view/event-edit.js";
+import EventPresenter from "./event.js";
 import DayView from "../view/day.js";
 import EventsListView from "../view/events-list.js";
 import {SortType} from "../const.js";
 import {generateDays} from "../mock/days.js";
 import {sortByPrice, sortByTime, sortByDate} from "../utils/event.js";
+import {updateItem} from "../utils/common.js";
 
 
 // Конструктор маршрута путешествия - создаёт, отрисовывает элементы, навешивает обработчики
 export default class Trip {
   constructor(tripContainer) {
     this._tripContainer = tripContainer;
+    this._currentSort = SortType.DEFAULT;
+    this._eventPresenter = {};
+
     this._noEventsComponent = new NoEventsView();
     this._sortComponent = new SortView();
-    this._currentSort = SortType.DEFAULT;
     this._daysListComponent = new DaysListView();
+
     this._handleSortChange = this._handleSortChange.bind(this);
+    this._handleEventChange = this._handleEventChange.bind(this);
+    this._handleModeChange = this._handleModeChange.bind(this);
   }
 
   init(events) {
@@ -74,38 +79,23 @@ export default class Trip {
     this._sortComponent.setSortChangeHandler(this._handleSortChange);
   }
 
+  // Обновляет моки и вызывает обновление конкретной точки маршрута
+  _handleEventChange(updatedEvent) {
+    this._events = updateItem(this._events, updatedEvent);
+    this._sourcedEvents = updateItem(this._sourcedEvents, updatedEvent);
+    this._eventPresenter[updatedEvent.id].init(updatedEvent);
+  }
+
+  // Сбрасывает у всех презентеров точек маршрута режим отображения на режим по умолчанию
+  _handleModeChange() {
+    Object.values(this._eventPresenter).forEach((presenter) => presenter.resetView());
+  }
+
   // Отрисовывает точку маршрута
   _renderEvent(container, tripEvent) {
-    const eventComponent = new EventView(tripEvent);
-    const eventEditComponent = new EventEditView(tripEvent);
-
-    render(container, eventComponent, RenderPosition.BEFOREEND);
-
-    const onEscKeyDown = (evt) => {
-      if (evt.key === `Escape` || evt.key === `Esc`) {
-        evt.preventDefault();
-        replaceFormToEvent();
-        document.removeEventListener(`keydown`, onEscKeyDown);
-      }
-    };
-
-    const replaceEventToForm = () => {
-      replace(eventEditComponent, eventComponent);
-    };
-
-    const replaceFormToEvent = () => {
-      replace(eventComponent, eventEditComponent);
-    };
-
-    eventComponent.setRollupClickHandler(() => {
-      replaceEventToForm();
-      document.addEventListener(`keydown`, onEscKeyDown);
-    });
-
-    eventEditComponent.setFormSubmitHandler(() => {
-      replaceFormToEvent();
-      document.removeEventListener(`keydown`, onEscKeyDown);
-    });
+    const eventPresenter = new EventPresenter(container, this._handleEventChange, this._handleModeChange);
+    eventPresenter.init(tripEvent);
+    this._eventPresenter[tripEvent.id] = eventPresenter;
   }
 
   // Отрисовывает список точек маршрута
@@ -128,6 +118,8 @@ export default class Trip {
   }
 
   _clearTrip() {
+    Object.values(this._eventPresenter).forEach((presenter) => presenter.destroy());
+    this._eventPresenter = {};
     remove(this._daysListComponent);
   }
 

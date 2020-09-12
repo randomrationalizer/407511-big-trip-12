@@ -1,4 +1,4 @@
-import {TRANSFER_EVENTS} from "../const.js";
+import {TRANSFER_EVENTS, EVENT_OFFERS, eventTypeToOffers} from "../const.js";
 
 // Возвращает дату в виде строки в формате ISO гггг-мм-ддTчч:мм
 export const formatDateToIso = (date) => {
@@ -36,4 +36,14 @@ export const sortByTime = (first, second) => {
 // Сравнение для сортировки событий в хронологическом порядке
 export const sortByDate = (first, second) => {
   return first.startDate.getTime() - second.startDate.getTime();
+};
+
+export const isAnyOffersAvailable = (eventType) => {
+  return eventTypeToOffers[eventType] !== null;
+};
+
+export const getAvailableOffers = (eventType) => {
+  const availableOffers = eventTypeToOffers[eventType];
+
+  return availableOffers === null ? null : availableOffers.map((offer) => EVENT_OFFERS.find((elem) => elem.type === offer));
 };
