@@ -19,6 +19,9 @@ const getRandomInteger = (a = 0, b = 1) => {
   return Math.floor(lower + Math.random() * (upper - lower + 1));
 };
 
+// Генерирует случайный id (только для моков)
+const generateId = () => Date.now() + getRandomInteger(0, 10000);
+
 // Возвращает случайное значение из массива
 const getRandomValue = (values) => {
   const randomIndex = getRandomInteger(0, values.length - 1);
@@ -50,7 +53,7 @@ const generatePhotos = () => {
 };
 
 // Создаёт моковый объект описания города
-const generateCityInfo = () => {
+export const generateCityInfo = () => {
   return {
     description: generateDescription(),
     pics: generatePhotos()
@@ -113,6 +116,7 @@ export const generateEvent = () => {
   const endDate = generateEndDate(startDate);
 
   return {
+    id: generateId(),
     type: eventType,
     destination: getRandomValue(CITIES),
     cityInfo: generateCityInfo(),
