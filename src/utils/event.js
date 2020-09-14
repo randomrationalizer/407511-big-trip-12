@@ -1,13 +1,6 @@
 import {TRANSFER_EVENTS, EVENT_OFFERS, eventTypeToOffers} from "../const.js";
 import moment from "moment";
 
-// Возвращает текущую дату
-const getCurrentDate = () => {
-  const currentDate = new Date();
-  currentDate.setHours(0, 0);
-  return new Date(currentDate);
-};
-
 // Возвращает дату в виде строки в формате: "день/месяц/год часы:минуты"
 export const formatDate = (date) => {
   if (!(date instanceof Date)) {
