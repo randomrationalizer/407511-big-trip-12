@@ -1,8 +1,10 @@
 import {EVENT_OFFERS, CITIES, EVENT_TYPES, TRANSFER_EVENTS} from "../const.js";
-import {createPreposition, isAnyOffersAvailable, getAvailableOffers} from "../utils/event.js";
+import {formatDate, createPreposition, isAnyOffersAvailable, getAvailableOffers} from "../utils/event.js";
 import {capitalize} from "../utils/common.js";
 import SmartView from "./smart.js";
 import {generateCityInfo} from "../mock/event.js"; // временно
+import flatpickr from "flatpickr";
+import "../../node_modules/flatpickr/dist/flatpickr.min.css";
 
 const BLANK_EVENT = {
   type: `bus`,
@@ -13,18 +15,6 @@ const BLANK_EVENT = {
   price: ``,
   offers: null,
   isFavorite: false
-};
-
-// Возвращает текущую дату
-const generateDate = () => {
-  const currentDate = new Date();
-  currentDate.setHours(0, 0);
-  return new Date(currentDate);
-};
-
-// Возвращает дату в виде строки в формате: "день/месяц/год часы:минуты"
-const humanizeDate = (date) => {
-  return date.toLocaleString(`en-GB`, {day: `2-digit`, month: `2-digit`, year: `2-digit`, hour: `2-digit`, minute: `2-digit`}).replace(`,`, ``);
 };
 
 // Возвращает шаблон элемента списка типов точки маршрута
@@ -87,19 +77,16 @@ const createCityInfoTemplate = (info) => {
 // Возвращает шаблон блока выбора даты
 const createDateEditTemplate = (start, end) => {
 
-  const startDate = start !== null ? humanizeDate(start) : humanizeDate(generateDate());
-  const endDate = start !== null ? humanizeDate(end) : humanizeDate(generateDate());
-
   return `<div class="event__field-group  event__field-group--time">
     <label class="visually-hidden" for="event-start-time-1">
       From
     </label>
-    <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="${startDate}">
+    <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="${formatDate(start)}">
     &mdash;
     <label class="visually-hidden" for="event-end-time-1">
       To
     </label>
-    <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="${endDate}">
+    <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="${formatDate(end)}">
   </div>`;
 };
 
@@ -134,6 +121,7 @@ const createEventEditFormTemplate = (data) => {
   const offersTemplate = isOffersAvailable ? createOffersTemplate(allOffers, offersSelection) : ``;
 
   const cityInfoTemplate = cityInfo !== null ? createCityInfoTemplate(cityInfo) : ``;
+  const isSubmitDisabled = startDate === null || endDate === null;
 
   return `<form class="trip-events__item  event  event--edit" action="#" method="post">
       <header class="event__header">
@@ -158,7 +146,7 @@ const createEventEditFormTemplate = (data) => {
           <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${price}">
         </div>
 
-        <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
+        <button class="event__save-btn  btn  btn--blue" type="submit" ${isSubmitDisabled ? `disabled` : ``}>Save</button>
         <button class="event__reset-btn" type="reset">${isNewEvent ? `Cancel` : `Delete`}</button>
 
         ${!isNewEvent ? `<input id="event-favorite-1" class="event__favorite-checkbox  visually-hidden" type="checkbox" name="event-favorite" ${isFavorite ? `checked` : ``}>
@@ -186,6 +174,7 @@ export default class EventEditView extends SmartView {
   constructor(tripEvent = BLANK_EVENT) {
     super();
     this._data = EventEditView.parseEventToData(tripEvent);
+    this._datepicker = null;
 
     this._formSubmitHandler = this._formSubmitHandler.bind(this);
     this._favoriteToggleHandler = this._favoriteToggleHandler.bind(this);
@@ -193,7 +182,10 @@ export default class EventEditView extends SmartView {
     this._eventTypeChangeHandler = this._eventTypeChangeHandler.bind(this);
     this._offersChangeHandler = this._offersChangeHandler.bind(this);
     this._destinationInputHandler = this._destinationInputHandler.bind(this);
+    this._startDateChangeHandler = this._startDateChangeHandler.bind(this);
+    this._endDateChangeHandler = this._endDateChangeHandler.bind(this);
     this._setHandlers();
+    this._setDatePicker();
   }
 
   // Преобразует объект точки маршута в объект с данными
@@ -266,6 +258,7 @@ export default class EventEditView extends SmartView {
     this.setFormSubmitHandler(this._callback.formSubmit);
     this._setHandlers();
     this.setRollupClickHandler(this._callback.rollupClick);
+    this._setDatePicker();
   }
 
   _formSubmitHandler(evt) {
@@ -320,6 +313,51 @@ export default class EventEditView extends SmartView {
   setRollupClickHandler(callback) {
     this._callback.rollupClick = callback;
     this.getElement().querySelector(`.event__rollup-btn`).addEventListener(`click`, this._rollupClickHandler);
+  }
+
+  _setDatePicker() {
+    if (this._datepicker) {
+      this._datepicker.destroy();
+      this._datepicker = null;
+    }
+
+    // день/месяц/год часы:минуты
+    // dateFormat: `d/m/y H:i`,
+
+    if (this._data.startDate) {
+      this._datepicker = flatpickr(
+          this.getElement().querySelector(`#event-start-time-1`),
+          {
+            enableTime: true,
+            dateFormat: `d/m/y H:i`,
+            [`time_24hr`]: true,
+            defaultDate: this._data.startDate,
+            onChange: this._startDateChangeHandler
+          }
+      );
+    }
+
+    if (this._data.endDate) {
+      this._datepicker = flatpickr(
+          this.getElement().querySelector(`#event-end-time-1`),
+          {
+            enableTime: true,
+            dateFormat: `d/m/y H:i`,
+            [`time_24hr`]: true,
+            minDate: this._data.startDate,
+            defaultDate: this._data.endDate,
+            onChange: this._endDateChangeHandler
+          }
+      );
+    }
+  }
+
+  _startDateChangeHandler(selectedDate) {
+    this.updateData({startDate: selectedDate[0]});
+  }
+
+  _endDateChangeHandler(selectedDate) {
+    this.updateData({endDate: selectedDate[0]});
   }
 
   _setHandlers() {

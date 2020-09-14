@@ -1,21 +1,7 @@
-import {formatDateToIso, createPreposition} from "../utils/event.js";
+import {formatDateToIso, formatTime, getFormatedDuration, createPreposition} from "../utils/event.js";
 import {capitalize} from "../utils/common.js";
 import AbstractView from "./abstract.js";
 
-// Возвращает длительность события в формате: "1D 1H 10M"
-const calculatetimeDiff = (start, end) => {
-  const timeDiff = end - start;
-
-  const msInMinute = 60000;
-  const msInHour = msInMinute * 60;
-  const msInDay = 24 * msInMinute * 60;
-
-  const days = Math.floor(timeDiff / msInDay);
-  const hours = Math.floor((timeDiff - days * msInDay) / msInHour);
-  const minutes = Math.floor((timeDiff - days * msInDay - hours * msInHour) / msInMinute);
-
-  return `${days > 0 ? `${days}D` : ``} ${hours > 0 ? `${hours}H` : ``} ${minutes > 0 ? `${minutes}M` : ``}`;
-};
 
 // Возвращает шаблон дополнительных опций точки маршрута
 const createOffersTemplate = (offers) => {
@@ -36,10 +22,6 @@ const createOffersTemplate = (offers) => {
 // Возвращает шаблон точки маршрута
 const createEventTemplate = (tripEvent) => {
   const {type, destination, startDate, endDate, price, offers} = tripEvent;
-
-  const startTime = startDate.toLocaleTimeString().slice(0, -3);
-  const endTime = endDate.toLocaleTimeString().slice(0, -3);
-  const duration = calculatetimeDiff(startDate, endDate);
   const offersTemplate = offers ? createOffersTemplate(offers) : ``;
 
   return `<li class="trip-events__item">
@@ -51,11 +33,11 @@ const createEventTemplate = (tripEvent) => {
 
         <div class="event__schedule">
           <p class="event__time">
-            <time class="event__start-time" datetime="${formatDateToIso(startDate)}">${startTime}</time>
+            <time class="event__start-time" datetime="${formatDateToIso(startDate)}">${formatTime(startDate)}</time>
             &mdash;
-            <time class="event__end-time" datetime="${formatDateToIso(endDate)}">${endTime}</time>
+            <time class="event__end-time" datetime="${formatDateToIso(endDate)}">${formatTime(endDate)}</time>
           </p>
-          <p class="event__duration">${duration}</p>
+          <p class="event__duration">${getFormatedDuration(startDate, endDate)}</p>
         </div>
 
         <p class="event__price">
