@@ -64,12 +64,36 @@ export const sortByDate = (first, second) => {
   return first.startDate.getTime() - second.startDate.getTime();
 };
 
+export const findOffer = (offers, offerType) => {
+  return offers.find((offer) => offer.type === offerType);
+};
+
 export const isAnyOffersAvailable = (eventType) => {
   return eventTypeToOffers[eventType] !== null;
 };
 
-export const getAvailableOffers = (eventType) => {
+export const getAvailableOffers = (offers, eventType) => {
   const availableOffers = eventTypeToOffers[eventType];
 
-  return availableOffers === null ? null : availableOffers.map((offer) => EVENT_OFFERS.find((elem) => elem.type === offer));
+  if (availableOffers === null) {
+    return null;
+  }
+
+  return availableOffers.map((offer) => findOffer(offers, offer));
+};
+
+export const isDatesEqual = (firstEvent, secondEvent) => {
+  return moment(firstEvent.startDate).isSame(secondEvent.startDate) && moment(firstEvent.endDate).isSame(secondEvent.endDate);
+};
+
+// Проверяет, является ли точка маршрута пройденной (дата окончания меньше, чем текущая)
+export const isEventPast = (endDate) => {
+  const currentDate = new Date();
+  return moment(currentDate).isAfter(endDate, `day`);
+};
+
+// Проверяет, является ли точка маршрута запланированной (дата начала больше, чем текущая)
+export const isEventFuture = (startDate) => {
+  const currentDate = new Date();
+  return moment(currentDate).isBefore(startDate, `day`);
 };

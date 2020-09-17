@@ -1,6 +1,8 @@
 import {RenderPosition, render, replace, remove} from "../utils/render.js";
 import EventView from "../view/event.js";
 import EventEditView from "../view/event-edit.js";
+import {UserAction, UpdateType} from "../const.js";
+import {isDatesEqual} from "../utils/event.js";
 
 // Режим отображения точки маршрута
 const Mode = {
@@ -11,8 +13,9 @@ const Mode = {
 
 // Презентер точки маршрута - отвечает за отрисовку точки маршрута и смену её на форму редактирования
 export default class Event {
-  constructor(eventListContainer, changeData, changeMode) {
+  constructor(eventListContainer, changeData, changeMode, offersModel) {
     this._eventListContainer = eventListContainer;
+    this._offersModel = offersModel;
 
     this._changeData = changeData;
     this._changeMode = changeMode;
@@ -23,6 +26,7 @@ export default class Event {
 
     this._handleRollupBtnClick = this._handleRollupBtnClick.bind(this);
     this._handleFormSubmit = this._handleFormSubmit.bind(this);
+    this._handleFormReset = this._handleFormReset.bind(this);
     this._escKeyDownHandler = this._escKeyDownHandler.bind(this);
   }
 
@@ -33,10 +37,11 @@ export default class Event {
     const prevEventEditComponent = this._eventEditComponent;
 
     this._eventComponent = new EventView(tripEvent);
-    this._eventEditComponent = new EventEditView(tripEvent);
+    this._eventEditComponent = new EventEditView(tripEvent, this._offersModel);
 
     this._eventComponent.setRollupClickHandler(this._handleRollupBtnClick);
     this._eventEditComponent.setFormSubmitHandler(this._handleFormSubmit);
+    this._eventEditComponent.setFormResetHandler(this._handleFormReset);
     this._eventEditComponent.setRollupClickHandler(this._handleRollupBtnClick);
 
     // первичная инициализация
@@ -84,9 +89,23 @@ export default class Event {
   }
 
   // Обработчик отправки формы
-  _handleFormSubmit(tripEvent) {
-    this._changeData(tripEvent);
+  _handleFormSubmit(updatedEvent) {
+
+    // Проверяем, поменялись ли в задаче данные, которые попадают под фильтрацию,
+    // а значит требуют перерисовки списка - если таких нет, это PATCH-обновление
+    const isMinorUpdate = !isDatesEqual(this._event, updatedEvent) || updatedEvent.price === this._event.price;
+
+
+    this._changeData(
+        UserAction.UPDATE_EVENT,
+        isMinorUpdate ? UpdateType.MINOR : UpdateType.PATCH,
+        updatedEvent
+    );
     this._replaceFormToEvent();
+  }
+
+  _handleFormReset(tripEvent) {
+    this._changeData(UserAction.DELETE_EVENT, UpdateType.MINOR, tripEvent);
   }
 
   // Обработчик открытия / скрытия формы редактирования

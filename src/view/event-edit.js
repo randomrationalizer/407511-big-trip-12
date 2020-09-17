@@ -1,5 +1,5 @@
-import {EVENT_OFFERS, CITIES, EVENT_TYPES, TRANSFER_EVENTS} from "../const.js";
-import {formatDate, createPreposition, isAnyOffersAvailable, getAvailableOffers} from "../utils/event.js";
+import {eventTypeToOffers, CITIES, EVENT_TYPES, TRANSFER_EVENTS} from "../const.js";
+import {formatDate, createPreposition, getAvailableOffers, isAnyOffersAvailable, findOffer} from "../utils/event.js";
 import {capitalize} from "../utils/common.js";
 import SmartView from "./smart.js";
 import {generateCityInfo} from "../mock/event.js"; // временно
@@ -112,13 +112,13 @@ const createOffersTemplate = (availableOffers, selection) => {
 
 // Возвращает шаблон формы редактирования/создания точки маршрута
 const createEventEditFormTemplate = (data) => {
-  const {type, destination, cityInfo, startDate, endDate, price, isOffersAvailable, allOffers, offersSelection, isFavorite} = data;
+  const {type, destination, cityInfo, startDate, endDate, price, isOffersAvailable, availableOffers, offersSelection, isFavorite} = data;
 
   const eventTypeListTemplate = createEventTypeTemplate(type);
   const destinationTemplate = createDestinationTemplate(destination, type);
   const dateTemplate = createDateEditTemplate(startDate, endDate);
   const isNewEvent = startDate === null && endDate === null ? true : false;
-  const offersTemplate = isOffersAvailable ? createOffersTemplate(allOffers, offersSelection) : ``;
+  const offersTemplate = isOffersAvailable ? createOffersTemplate(availableOffers, offersSelection) : ``;
 
   const cityInfoTemplate = cityInfo !== null ? createCityInfoTemplate(cityInfo) : ``;
   const isSubmitDisabled = startDate === null || endDate === null;
@@ -171,9 +171,13 @@ const createEventEditFormTemplate = (data) => {
 };
 
 export default class EventEditView extends SmartView {
-  constructor(tripEvent = BLANK_EVENT) {
+  constructor(tripEvent = BLANK_EVENT, offersModel) {
     super();
-    this._data = EventEditView.parseEventToData(tripEvent);
+    this._offersModel = offersModel;
+    this._offers = this._offersModel.getOffers();
+
+    this._data = EventEditView.parseEventToData(this._offers, tripEvent);
+
     this._datepicker = null;
 
     this._formSubmitHandler = this._formSubmitHandler.bind(this);
@@ -184,13 +188,14 @@ export default class EventEditView extends SmartView {
     this._destinationInputHandler = this._destinationInputHandler.bind(this);
     this._startDateChangeHandler = this._startDateChangeHandler.bind(this);
     this._endDateChangeHandler = this._endDateChangeHandler.bind(this);
+    this._formResetHandler = this._formResetHandler.bind(this);
     this._setHandlers();
     this._setDatePicker();
   }
 
   // Преобразует объект точки маршута в объект с данными
-  static parseEventToData(tripEvent) {
-    const availableOffers = getAvailableOffers(tripEvent.type);
+  static parseEventToData(allOffers, tripEvent) {
+    const availableOffers = getAvailableOffers(allOffers, tripEvent.type);
     let offersSelection = {};
 
     if (availableOffers !== null) {
@@ -206,11 +211,11 @@ export default class EventEditView extends SmartView {
       }
     }
 
-    return Object.assign({}, tripEvent, {isOffersAvailable: availableOffers !== null, allOffers: availableOffers, offersSelection});
+    return Object.assign({}, tripEvent, {isOffersAvailable: availableOffers !== null, availableOffers, offersSelection});
   }
 
   // Преобразует объект с данными в объект точки маршрута
-  static parseDataToEvent(data) {
+  static parseDataToEvent(allOffers, data) {
     data = Object.assign({}, data);
     let selectedOffers = [];
 
@@ -219,8 +224,7 @@ export default class EventEditView extends SmartView {
 
       for (const offer of availableOffers) {
         if (data.offersSelection[offer] === true) {
-          const offerData = EVENT_OFFERS.find((elem) => elem.type === offer);
-          selectedOffers.push(offerData);
+          selectedOffers.push(findOffer(allOffers, offer));
         }
       }
     }
@@ -228,7 +232,7 @@ export default class EventEditView extends SmartView {
     data.offers = selectedOffers.length !== 0 ? selectedOffers : null;
 
     delete data.isOffersAvailable;
-    delete data.allOffers;
+    delete data.availableOffers;
     delete data.offersSelection;
 
     return data;
@@ -251,19 +255,27 @@ export default class EventEditView extends SmartView {
   }
 
   reset(tripEvent) {
-    this.updateData(EventEditView.parseEventToData(tripEvent));
+    this.updateData(EventEditView.parseEventToData(this._offers, tripEvent));
   }
 
   restoreHandlers() {
     this.setFormSubmitHandler(this._callback.formSubmit);
+    this.setFormResetHandler(this._callback.formReset);
     this._setHandlers();
     this.setRollupClickHandler(this._callback.rollupClick);
     this._setDatePicker();
   }
 
+  // Удаляет ненужные календари при удалении элемента
+  removeElement() {
+    super.removeElement();
+
+    this._removeDatePicker();
+  }
+
   _formSubmitHandler(evt) {
     evt.preventDefault();
-    this._callback.formSubmit(EventEditView.parseDataToEvent(this._data));
+    this._callback.formSubmit(EventEditView.parseDataToEvent(this._offers, this._data));
   }
 
   _favoriteToggleHandler(evt) {
@@ -279,6 +291,26 @@ export default class EventEditView extends SmartView {
           this._data.offersSelection,
           {[evt.target.dataset.offerType]: evt.target.checked}
       )});
+  }
+
+
+
+  // Кнопка «Cancel». Отмена изменений и закрытие формы создания точки маршрута.
+
+
+
+  // this._offers нужно убрать!!!!!!!!!
+
+
+
+  _formResetHandler(evt) {
+    evt.preventDefault();
+    this._callback.formReset(EventEditView.parseDataToEvent(this._offers, this._data));
+  }
+
+  setFormResetHandler(callback) {
+    this._callback.formReset = callback;
+    this.getElement().addEventListener(`reset`, this._formResetHandler);
   }
 
   setFormSubmitHandler(callback) {
@@ -300,7 +332,7 @@ export default class EventEditView extends SmartView {
     this.updateData({
       type: eventType,
       isOffersAvailable: isAnyOffersAvailable(eventType),
-      allOffers: getAvailableOffers(eventType),
+      availableOffers: getAvailableOffers(eventType),
       offersSelection: EventEditView.resetOffersSelection(eventType)
     });
   }
@@ -315,14 +347,15 @@ export default class EventEditView extends SmartView {
     this.getElement().querySelector(`.event__rollup-btn`).addEventListener(`click`, this._rollupClickHandler);
   }
 
-  _setDatePicker() {
+  _removeDatePicker() {
     if (this._datepicker) {
       this._datepicker.destroy();
       this._datepicker = null;
     }
+  }
 
-    // день/месяц/год часы:минуты
-    // dateFormat: `d/m/y H:i`,
+  _setDatePicker() {
+    this._removeDatePicker();
 
     if (this._data.startDate) {
       this._datepicker = flatpickr(
