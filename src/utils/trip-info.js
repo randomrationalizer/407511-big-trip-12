@@ -1,5 +1,5 @@
 // Вычисляет затраты на путешествие
-const calculateTotalCost = (tripEvents) => {
+const calculateTotalCosts = (tripEvents) => {
   const eventsCosts = tripEvents.reduce((cost, tripEvent) => cost + tripEvent.price, 0);
   const offersCosts = tripEvents.reduce((total, tripEvent) => {
     let offersSum = 0;
@@ -15,11 +15,11 @@ const calculateTotalCost = (tripEvents) => {
 
 
 // Создаёт данные для блока информации о путешествии
-export const createTripInfo = (tripEvents) => {
+export const getTripInfo = (tripEvents) => {
   if (tripEvents.length === 0) {
     return null;
   } else {
-    const route = tripEvents.map((tripEvent) => tripEvent.destination);
+    const route = tripEvents.map((tripEvent) => tripEvent.destination.name);
     const startDate = tripEvents[0].startDate;
     const endDate = tripEvents[tripEvents.length - 1].endDate;
 
@@ -27,8 +27,7 @@ export const createTripInfo = (tripEvents) => {
       route,
       startDate,
       endDate,
-      cost: calculateTotalCost(tripEvents)
+      cost: calculateTotalCosts(tripEvents)
     };
   }
-
 };

@@ -1,15 +1,13 @@
-import {eventTypeToOffers, CITIES, EVENT_TYPES, TRANSFER_EVENTS} from "../const.js";
+import {EVENT_TYPES, TRANSFER_EVENTS} from "../const.js";
 import {formatDate, createPreposition, getAvailableOffers, isAnyOffersAvailable, findOffer} from "../utils/event.js";
 import {capitalize} from "../utils/common.js";
 import SmartView from "./smart.js";
-import {generateCityInfo} from "../mock/event.js"; // временно
 import flatpickr from "flatpickr";
 import "../../node_modules/flatpickr/dist/flatpickr.min.css";
 
 const BLANK_EVENT = {
   type: `bus`,
   destination: ``,
-  cityInfo: null,
   startDate: null,
   endDate: null,
   price: ``,
@@ -45,22 +43,22 @@ const createEventTypeTemplate = (selectedType) => {
 };
 
 // Возвращает шаблон блока выбора пункта назначения
-const createDestinationTemplate = (destination, type) => {
+const createDestinationTemplate = (cities, destination, type) => {
 
   return `<div class="event__field-group  event__field-group--destination">
     <label class="event__label  event__type-output" for="event-destination-1">
       ${capitalize(type)} ${createPreposition(type)}
     </label>
-    <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destination}" list="destination-list-1">
+    <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destination ? destination.name : ``}" list="destination-list-1" required>
     <datalist id="destination-list-1">
-      ${CITIES.map((city) => `<option value="${city}"></option>`).join(``)}
+      ${cities.map((city) => `<option value="${city.name}"></option>`).join(``)}
     </datalist>
   </div>`;
 };
 
 // Возвращает шаблон блока с описанием пункта назначения
-const createCityInfoTemplate = (info) => {
-  const {description, pics} = info;
+const createCityInfoTemplate = (destination) => {
+  const {description, pics} = destination;
 
   return `<section class="event__section  event__section--destination">
     <h3 class="event__section-title  event__section-title--destination">Destination</h3>
@@ -68,7 +66,7 @@ const createCityInfoTemplate = (info) => {
 
     <div class="event__photos-container">
       <div class="event__photos-tape">
-        ${pics.map((pic) => `<img class="event__photo" src="${pic}" alt="Event photo">`).join(``)}
+        ${pics.length > 0 ? pics.map((pic) => `<img class="event__photo" src="${pic.src}" alt="${pic.description}">`).join(``) : ``}
       </div>
     </div>
   </section>`;
@@ -81,12 +79,12 @@ const createDateEditTemplate = (start, end) => {
     <label class="visually-hidden" for="event-start-time-1">
       From
     </label>
-    <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="${formatDate(start)}">
+    <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="${formatDate(start)}" required>
     &mdash;
     <label class="visually-hidden" for="event-end-time-1">
       To
     </label>
-    <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="${formatDate(end)}">
+    <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="${formatDate(end)}" required>
   </div>`;
 };
 
@@ -111,16 +109,15 @@ const createOffersTemplate = (availableOffers, selection) => {
 };
 
 // Возвращает шаблон формы редактирования/создания точки маршрута
-const createEventEditFormTemplate = (data) => {
-  const {type, destination, cityInfo, startDate, endDate, price, isOffersAvailable, availableOffers, offersSelection, isFavorite} = data;
+const createEventEditFormTemplate = (cities, data) => {
+  const {type, destination, startDate, endDate, price, isOffersAvailable, availableOffers, offersSelection, isFavorite, isNewEvent} = data;
 
   const eventTypeListTemplate = createEventTypeTemplate(type);
-  const destinationTemplate = createDestinationTemplate(destination, type);
+  const destinationTemplate = createDestinationTemplate(cities, destination, type);
   const dateTemplate = createDateEditTemplate(startDate, endDate);
-  const isNewEvent = startDate === null && endDate === null ? true : false;
   const offersTemplate = isOffersAvailable ? createOffersTemplate(availableOffers, offersSelection) : ``;
 
-  const cityInfoTemplate = cityInfo !== null ? createCityInfoTemplate(cityInfo) : ``;
+  const cityInfoTemplate = destination ? createCityInfoTemplate(destination) : ``;
   const isSubmitDisabled = startDate === null || endDate === null;
 
   return `<form class="trip-events__item  event  event--edit" action="#" method="post">
@@ -143,7 +140,7 @@ const createEventEditFormTemplate = (data) => {
             <span class="visually-hidden">Price</span>
             &euro;
           </label>
-          <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${price}">
+          <input class="event__input  event__input--price" id="event-price-1" type="number" name="event-price" value="${price}" required>
         </div>
 
         <button class="event__save-btn  btn  btn--blue" type="submit" ${isSubmitDisabled ? `disabled` : ``}>Save</button>
@@ -171,10 +168,13 @@ const createEventEditFormTemplate = (data) => {
 };
 
 export default class EventEditView extends SmartView {
-  constructor(tripEvent = BLANK_EVENT, offersModel) {
+  constructor(tripEvent = BLANK_EVENT, offersModel, destinationsModel) {
     super();
     this._offersModel = offersModel;
+    this._destinationsModel = destinationsModel;
+
     this._offers = this._offersModel.getOffers();
+    this._destinations = this._destinationsModel.getDestinations();
 
     this._data = EventEditView.parseEventToData(this._offers, tripEvent);
 
@@ -185,10 +185,11 @@ export default class EventEditView extends SmartView {
     this._rollupClickHandler = this._rollupClickHandler.bind(this);
     this._eventTypeChangeHandler = this._eventTypeChangeHandler.bind(this);
     this._offersChangeHandler = this._offersChangeHandler.bind(this);
-    this._destinationInputHandler = this._destinationInputHandler.bind(this);
+    this._destinationChangeHandler = this._destinationChangeHandler.bind(this);
     this._startDateChangeHandler = this._startDateChangeHandler.bind(this);
     this._endDateChangeHandler = this._endDateChangeHandler.bind(this);
     this._formResetHandler = this._formResetHandler.bind(this);
+    this._priceInputHandler = this._priceInputHandler.bind(this);
     this._setHandlers();
     this._setDatePicker();
   }
@@ -211,7 +212,9 @@ export default class EventEditView extends SmartView {
       }
     }
 
-    return Object.assign({}, tripEvent, {isOffersAvailable: availableOffers !== null, availableOffers, offersSelection});
+    const isNewEvent = tripEvent.startDate === null && tripEvent.endDate === null ? true : false;
+
+    return Object.assign({}, tripEvent, {isOffersAvailable: availableOffers !== null, availableOffers, offersSelection, isNewEvent});
   }
 
   // Преобразует объект с данными в объект точки маршрута
@@ -234,16 +237,17 @@ export default class EventEditView extends SmartView {
     delete data.isOffersAvailable;
     delete data.availableOffers;
     delete data.offersSelection;
+    delete data.isNewEvent;
 
     return data;
   }
 
   getTemplate() {
-    return createEventEditFormTemplate(this._data);
+    return createEventEditFormTemplate(this._destinations, this._data);
   }
 
-  static resetOffersSelection(eventType) {
-    const availableOffers = getAvailableOffers(eventType);
+  _resetOffersSelection(eventType) {
+    const availableOffers = getAvailableOffers(this._offers, eventType);
     let selection = {};
     if (availableOffers !== null) {
       availableOffers.forEach((offer) => {
@@ -293,16 +297,6 @@ export default class EventEditView extends SmartView {
       )});
   }
 
-
-
-  // Кнопка «Cancel». Отмена изменений и закрытие формы создания точки маршрута.
-
-
-
-  // this._offers нужно убрать!!!!!!!!!
-
-
-
   _formResetHandler(evt) {
     evt.preventDefault();
     this._callback.formReset(EventEditView.parseDataToEvent(this._offers, this._data));
@@ -318,22 +312,52 @@ export default class EventEditView extends SmartView {
     this.getElement().addEventListener(`submit`, this._formSubmitHandler);
   }
 
-  _destinationInputHandler(evt) {
+  _destinationChangeHandler(evt) {
     evt.preventDefault();
-    this.updateData({
-      destination: evt.target.value,
-      cityInfo: generateCityInfo()
-    });
+    const cityName = evt.target.value;
+    const cityData = this._destinations.find((destination) => destination.name === cityName);
+
+    if (!cityData) {
+      evt.target.setCustomValidity(`Unknown destination. Please check the entered value.`);
+      evt.target.reportValidity();
+    } else {
+      evt.target.setCustomValidity(``);
+      evt.target.reportValidity();
+
+      this.updateData({
+        destination: cityData
+      });
+    }
+  }
+
+  _priceInputHandler(evt) {
+    evt.preventDefault();
+
+    const priceValue = parseInt(evt.target.value, 10);
+    evt.target.value = priceValue;
+
+    if (priceValue <= 0) {
+      evt.target.setCustomValidity(`Incorrect price. You can use numbers greater then zero only.`);
+      evt.target.reportValidity();
+    } else {
+      evt.target.setCustomValidity(``);
+      // evt.target.reportValidity();
+
+      this.updateData({
+        price: priceValue
+      }, true);
+    }
   }
 
   _eventTypeChangeHandler(evt) {
     evt.preventDefault();
     const eventType = evt.target.textContent.toLowerCase();
+    const defaultOffersSelection = this._resetOffersSelection(eventType);
     this.updateData({
       type: eventType,
       isOffersAvailable: isAnyOffersAvailable(eventType),
-      availableOffers: getAvailableOffers(eventType),
-      offersSelection: EventEditView.resetOffersSelection(eventType)
+      availableOffers: getAvailableOffers(this._offers, eventType),
+      offersSelection: defaultOffersSelection
     });
   }
 
@@ -343,6 +367,10 @@ export default class EventEditView extends SmartView {
   }
 
   setRollupClickHandler(callback) {
+    if (this._data.isNewEvent) {
+      return;
+    }
+
     this._callback.rollupClick = callback;
     this.getElement().querySelector(`.event__rollup-btn`).addEventListener(`click`, this._rollupClickHandler);
   }
@@ -357,32 +385,28 @@ export default class EventEditView extends SmartView {
   _setDatePicker() {
     this._removeDatePicker();
 
-    if (this._data.startDate) {
-      this._datepicker = flatpickr(
-          this.getElement().querySelector(`#event-start-time-1`),
-          {
-            enableTime: true,
-            dateFormat: `d/m/y H:i`,
-            [`time_24hr`]: true,
-            defaultDate: this._data.startDate,
-            onChange: this._startDateChangeHandler
-          }
-      );
-    }
+    this._datepicker = flatpickr(
+        this.getElement().querySelector(`#event-start-time-1`),
+        {
+          enableTime: true,
+          dateFormat: `d/m/y H:i`,
+          [`time_24hr`]: true,
+          defaultDate: this._data.startDate,
+          onChange: this._startDateChangeHandler
+        }
+    );
 
-    if (this._data.endDate) {
-      this._datepicker = flatpickr(
-          this.getElement().querySelector(`#event-end-time-1`),
-          {
-            enableTime: true,
-            dateFormat: `d/m/y H:i`,
-            [`time_24hr`]: true,
-            minDate: this._data.startDate,
-            defaultDate: this._data.endDate,
-            onChange: this._endDateChangeHandler
-          }
-      );
-    }
+    this._datepicker = flatpickr(
+        this.getElement().querySelector(`#event-end-time-1`),
+        {
+          enableTime: true,
+          dateFormat: `d/m/y H:i`,
+          [`time_24hr`]: true,
+          minDate: this._data.startDate,
+          defaultDate: this._data.endDate,
+          onChange: this._endDateChangeHandler
+        }
+    );
   }
 
   _startDateChangeHandler(selectedDate) {
@@ -394,13 +418,18 @@ export default class EventEditView extends SmartView {
   }
 
   _setHandlers() {
-    this.getElement().querySelector(`.event__favorite-btn`).addEventListener(`click`, this._favoriteToggleHandler);
+    if (!this._data.isNewEvent) {
+      this.getElement().querySelector(`.event__favorite-btn`).addEventListener(`click`, this._favoriteToggleHandler);
+    }
+
     this.getElement().querySelector(`.event__type-group`).addEventListener(`click`, this._eventTypeChangeHandler);
 
     if (this._data.isOffersAvailable) {
       this.getElement().querySelector(`.event__available-offers`).addEventListener(`change`, this._offersChangeHandler);
     }
 
-    this.getElement().querySelector(`.event__input--destination`).addEventListener(`change`, this._destinationInputHandler);
+    this.getElement().querySelector(`.event__input--destination`).addEventListener(`change`, this._destinationChangeHandler);
+
+    this.getElement().querySelector(`.event__input--price`).addEventListener(`input`, this._priceInputHandler);
   }
 }

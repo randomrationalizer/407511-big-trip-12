@@ -6,17 +6,19 @@ import SortView from "../view/sort.js";
 import EventPresenter from "./event.js";
 import DayView from "../view/day.js";
 import EventsListView from "../view/events-list.js";
-import {SortType, UserAction, UpdateType} from "../const.js";
+import {SortType, UserAction, UpdateType, FilterType} from "../const.js";
 import {sortByPrice, sortByTime, sortByDate, formatDateWithoutTime} from "../utils/event.js";
+import EventNewPresenter from "./event-new.js";
 
 
 // Конструктор маршрута путешествия - создаёт, отрисовывает элементы, навешивает обработчики
 export default class Trip {
-  constructor(tripContainer, eventsModel, offersModel, filterModel) {
+  constructor(tripContainer, eventsModel, offersModel, filterModel, destinationsModel) {
     this._tripContainer = tripContainer;
     this._eventsModel = eventsModel;
     this._offersModel = offersModel;
     this._filterModel = filterModel;
+    this._destinationsModel = destinationsModel;
     this._currentSort = SortType.DEFAULT;
     this._eventPresenter = {};
     this._sortComponent = null;
@@ -31,6 +33,7 @@ export default class Trip {
 
     this._eventsModel.addObserver(this._handleModelEvent);
     this._filterModel.addObserver(this._handleModelEvent);
+    this._eventNewPresenter = new EventNewPresenter(this._daysListComponent, this._handleViewAction, this._offersModel, this._destinationsModel);
   }
 
   init() {
@@ -121,12 +124,20 @@ export default class Trip {
 
   // Сбрасывает у всех презентеров точек маршрута режим отображения на режим по умолчанию
   _handleModeChange() {
+    this._eventNewPresenter.destroy();
     Object.values(this._eventPresenter).forEach((presenter) => presenter.resetView());
+  }
+
+  createEvent() {
+    // при создании новой точки маршрута сбрасывается фильтрация и сортировка
+    this._currentSort = SortType.DEFAULT;
+    this._filterModel.setFilter(UpdateType.MAJOR, FilterType.EVERYTHING);
+    this._eventNewPresenter.init();
   }
 
   // Отрисовывает точку маршрута
   _renderEvent(container, tripEvent) {
-    const eventPresenter = new EventPresenter(container, this._handleViewAction, this._handleModeChange, this._offersModel);
+    const eventPresenter = new EventPresenter(container, this._handleViewAction, this._handleModeChange, this._offersModel, this._destinationsModel);
     eventPresenter.init(tripEvent);
     this._eventPresenter[tripEvent.id] = eventPresenter;
   }
@@ -166,6 +177,7 @@ export default class Trip {
 
   // Сбрасывает представление списка точек маршрута, сортировки
   _clearTrip({resetSortType = false} = {}) {
+    this._eventNewPresenter.destroy();
     Object.values(this._eventPresenter).forEach((presenter) => presenter.destroy());
     this._eventPresenter = {};
 

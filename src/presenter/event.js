@@ -13,9 +13,10 @@ const Mode = {
 
 // Презентер точки маршрута - отвечает за отрисовку точки маршрута и смену её на форму редактирования
 export default class Event {
-  constructor(eventListContainer, changeData, changeMode, offersModel) {
+  constructor(eventListContainer, changeData, changeMode, offersModel, destinationsModel) {
     this._eventListContainer = eventListContainer;
     this._offersModel = offersModel;
+    this._destinationsModel = destinationsModel;
 
     this._changeData = changeData;
     this._changeMode = changeMode;
@@ -37,7 +38,7 @@ export default class Event {
     const prevEventEditComponent = this._eventEditComponent;
 
     this._eventComponent = new EventView(tripEvent);
-    this._eventEditComponent = new EventEditView(tripEvent, this._offersModel);
+    this._eventEditComponent = new EventEditView(tripEvent, this._offersModel, this._destinationsModel);
 
     this._eventComponent.setRollupClickHandler(this._handleRollupBtnClick);
     this._eventEditComponent.setFormSubmitHandler(this._handleFormSubmit);
@@ -90,9 +91,6 @@ export default class Event {
 
   // Обработчик отправки формы
   _handleFormSubmit(updatedEvent) {
-
-    // Проверяем, поменялись ли в задаче данные, которые попадают под фильтрацию,
-    // а значит требуют перерисовки списка - если таких нет, это PATCH-обновление
     const isMinorUpdate = !isDatesEqual(this._event, updatedEvent) || updatedEvent.price === this._event.price;
 
 

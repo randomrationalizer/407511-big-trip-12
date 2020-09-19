@@ -1,4 +1,4 @@
-import {TRANSFER_EVENTS, EVENT_OFFERS, eventTypeToOffers} from "../const.js";
+import {TRANSFER_EVENTS, eventTypeToOffers} from "../const.js";
 import moment from "moment";
 
 // Возвращает дату в виде строки в формате: "день/месяц/год часы:минуты"

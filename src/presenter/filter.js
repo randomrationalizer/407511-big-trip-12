@@ -1,13 +1,15 @@
 import FilterView from "../view/filter.js";
 import {RenderPosition, render, remove, replace} from "../utils/render.js";
 import {FilterType, UpdateType} from "../const.js";
+import {filter} from "../utils/filter.js";
 
 
 // Презентер фильтра точек маршрута
 export default class Filter {
-  constructor(filterContainer, filterModel) {
+  constructor(filterContainer, filterModel, eventsModel) {
     this._filterContainer = filterContainer;
     this._filterModel = filterModel;
+    this._eventsModel = eventsModel;
     this._currentFilter = null;
 
     this._filterComponent = null;
@@ -16,6 +18,7 @@ export default class Filter {
     this._handleFilterTypeChange = this._handleFilterTypeChange.bind(this);
 
     this._filterModel.addObserver(this._handleModelEvent);
+    this._eventsModel.addObserver(this._handleModelEvent);
   }
 
   init() {
@@ -49,18 +52,23 @@ export default class Filter {
   }
 
   _getFilters() {
+    const tripEvents = this._eventsModel.getEvents();
+
     return [
       {
         type: FilterType.EVERYTHING,
-        name: `Everything`
+        name: `Everything`,
+        isDisabled: filter[FilterType.EVERYTHING](tripEvents).length === 0
       },
       {
         type: FilterType.FUTURE,
-        name: `Future`
+        name: `Future`,
+        isDisabled: filter[FilterType.FUTURE](tripEvents).length === 0
       },
       {
         type: FilterType.PAST,
-        name: `Past`
+        name: `Past`,
+        isDisabled: filter[FilterType.PAST](tripEvents).length === 0
       }
     ];
   }

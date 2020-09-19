@@ -1,6 +1,3 @@
-// Названия городов назначения
-export const CITIES = [`Amsterdam`, `Vienna`, `Geneva`, `Lucerne`, `Chamonix`, `Saint Petersburg`];
-
 // Типы событий
 export const EVENT_TYPES = [`taxi`, `bus`, `train`, `ship`, `transport`, `drive`, `flight`, `check-in`, `sightseeing`, `restaurant`];
 
