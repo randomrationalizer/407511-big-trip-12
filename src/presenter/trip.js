@@ -6,7 +6,7 @@ import SortView from "../view/sort.js";
 import EventPresenter from "./event.js";
 import DayView from "../view/day.js";
 import EventsListView from "../view/events-list.js";
-import {SortType, UserAction, UpdateType, FilterType} from "../const.js";
+import {SortType, UserAction, UpdateType} from "../const.js";
 import {sortByPrice, sortByTime, sortByDate, formatDateWithoutTime} from "../utils/event.js";
 import EventNewPresenter from "./event-new.js";
 
@@ -31,12 +31,13 @@ export default class Trip {
     this._handleModelEvent = this._handleModelEvent.bind(this);
     this._handleModeChange = this._handleModeChange.bind(this);
 
-    this._eventsModel.addObserver(this._handleModelEvent);
-    this._filterModel.addObserver(this._handleModelEvent);
     this._eventNewPresenter = new EventNewPresenter(this._daysListComponent, this._handleViewAction, this._offersModel, this._destinationsModel);
   }
 
   init() {
+    this._eventsModel.addObserver(this._handleModelEvent);
+    this._filterModel.addObserver(this._handleModelEvent);
+
     this._renderTrip();
   }
 
@@ -54,7 +55,7 @@ export default class Trip {
     }
 
     this._currentSort = sortType;
-    this._clearTrip(true);
+    this._clearTrip();
     this._renderTrip();
   }
 
@@ -128,11 +129,8 @@ export default class Trip {
     Object.values(this._eventPresenter).forEach((presenter) => presenter.resetView());
   }
 
-  createEvent() {
-    // при создании новой точки маршрута сбрасывается фильтрация и сортировка
-    this._currentSort = SortType.DEFAULT;
-    this._filterModel.setFilter(UpdateType.MAJOR, FilterType.EVERYTHING);
-    this._eventNewPresenter.init();
+  createEvent(callback) {
+    this._eventNewPresenter.init(callback);
   }
 
   // Отрисовывает точку маршрута
@@ -153,8 +151,7 @@ export default class Trip {
   // Возвращает данные дней путешествия
   _generateDays(tripEvents) {
     const dates = tripEvents.map((tripEvent) => formatDateWithoutTime(tripEvent.startDate));
-    const datesSet = new Set(dates);
-    const uniqueDates = Array.from(datesSet);
+    const uniqueDates = [...new Set(dates)];
 
     return uniqueDates.map((date) => {
       const matchEvents = tripEvents.filter((tripEvent) => formatDateWithoutTime(tripEvent.startDate) === date);
@@ -188,6 +185,12 @@ export default class Trip {
     if (resetSortType) {
       this._currentSort = SortType.DEFAULT;
     }
+  }
+
+  destroy() {
+    this._clearTrip({resetSortType: true});
+    this._eventsModel.removeObserver(this._handleModelEvent);
+    this._filterModel.removeObserver(this._handleModelEvent);
   }
 
   // Отрисовывает все события и дни маршрута путешествия

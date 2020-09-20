@@ -8,7 +8,7 @@ import EventsModel from "./model/events.js";
 import FilterModel from "./model/filter.js";
 import OffersModel from "./model/offers.js";
 import DestinationsModel from "./model/destinations.js";
-import {EVENT_OFFERS} from "./const.js";
+import {EVENT_OFFERS, MenuItem, UpdateType, FilterType} from "./const.js";
 import {generateDestinations} from "./mock/destinations.js";
 
 const EVENT_COUNT = 20;
@@ -35,18 +35,46 @@ const tripControlsFirstHeadingElement = tripControlsElement.querySelector(`h2`);
 const tripContainerElement = document.querySelector(`.trip-events`);
 
 // Отрисовка меню
-render(tripControlsFirstHeadingElement, new MenuView(), RenderPosition.AFTEREND);
+const menuComponent = new MenuView();
+render(tripControlsFirstHeadingElement, menuComponent, RenderPosition.AFTEREND);
 
 // Отрисовка дней и точек путешествия
 const tripPresenter = new TripPresenter(tripContainerElement, eventsModel, offersModel, filterModel, destinationsModel);
 const filterPresenter = new FilterPresenter(tripControlsElement, filterModel, eventsModel);
 const tripInfoPresenter = new TripInfoPresenter(tripMainElement, eventsModel);
 
-tripInfoPresenter.init();
-filterPresenter.init();
-tripPresenter.init();
+const handleMenuClick = (menuItem) => {
+  switch (menuItem) {
+    case MenuItem.TABLE:
+      // Скрыть статистику
+      tripPresenter.destroy();
+      menuComponent.setMenuItem(MenuItem.TABLE);
+      tripPresenter.init();
+      break;
+    case MenuItem.STATS:
+      filterModel.setFilter(UpdateType.MAJOR, FilterType.EVERYTHING);
+      tripPresenter.destroy();
+      menuComponent.setMenuItem(MenuItem.STATS);
+      // Показать статистику
+      break;
+  }
+};
+
+menuComponent.setMenuClickHandler(handleMenuClick);
+
+
+const handleNewEventFormClose = () => {
+  tripMainElement.querySelector(`.trip-main__event-add-btn`).disabled = false;
+};
 
 tripMainElement.querySelector(`.trip-main__event-add-btn`).addEventListener(`click`, (evt) => {
   evt.preventDefault();
-  tripPresenter.createEvent();
+  filterModel.setFilter(UpdateType.MAJOR, FilterType.EVERYTHING);
+  tripPresenter.createEvent(handleNewEventFormClose);
+  menuComponent.setMenuItem(MenuItem.TABLE);
+  evt.target.disabled = true;
 });
+
+tripInfoPresenter.init();
+filterPresenter.init();
+tripPresenter.init();
