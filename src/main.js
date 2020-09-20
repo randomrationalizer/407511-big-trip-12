@@ -1,6 +1,7 @@
 import MenuView from "./view/menu.js";
+import StatisticsView from "./view/statistic.js";
 import {generateEvent} from "./mock/event.js";
-import {RenderPosition, render} from "./utils/render.js";
+import {RenderPosition, render, remove} from "./utils/render.js";
 import TripPresenter from "./presenter/trip.js";
 import FilterPresenter from "./presenter/filter.js";
 import TripInfoPresenter from "./presenter/trip-info.js";
@@ -43,10 +44,12 @@ const tripPresenter = new TripPresenter(tripContainerElement, eventsModel, offer
 const filterPresenter = new FilterPresenter(tripControlsElement, filterModel, eventsModel);
 const tripInfoPresenter = new TripInfoPresenter(tripMainElement, eventsModel);
 
+let statisticsComponent = null;
+
 const handleMenuClick = (menuItem) => {
   switch (menuItem) {
     case MenuItem.TABLE:
-      // Скрыть статистику
+      remove(statisticsComponent);
       tripPresenter.destroy();
       menuComponent.setMenuItem(MenuItem.TABLE);
       tripPresenter.init();
@@ -55,13 +58,13 @@ const handleMenuClick = (menuItem) => {
       filterModel.setFilter(UpdateType.MAJOR, FilterType.EVERYTHING);
       tripPresenter.destroy();
       menuComponent.setMenuItem(MenuItem.STATS);
-      // Показать статистику
+      statisticsComponent = new StatisticsView(eventsModel.getEvents());
+      render(tripMainElement, statisticsComponent, RenderPosition.BEFOREEND);
       break;
   }
 };
 
 menuComponent.setMenuClickHandler(handleMenuClick);
-
 
 const handleNewEventFormClose = () => {
   tripMainElement.querySelector(`.trip-main__event-add-btn`).disabled = false;
@@ -69,6 +72,7 @@ const handleNewEventFormClose = () => {
 
 tripMainElement.querySelector(`.trip-main__event-add-btn`).addEventListener(`click`, (evt) => {
   evt.preventDefault();
+  remove(statisticsComponent);
   filterModel.setFilter(UpdateType.MAJOR, FilterType.EVERYTHING);
   tripPresenter.createEvent(handleNewEventFormClose);
   menuComponent.setMenuItem(MenuItem.TABLE);
