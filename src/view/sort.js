@@ -3,11 +3,10 @@ import {SortType} from "../const.js";
 import AbstractView from "./abstract.js";
 
 // Возвращает шаблон одного элемента сортировки
-const createEventSortItemTemplate = (sortType) => {
-  const isDefault = sortType === SortType.DEFAULT ? true : false;
+const createEventSortItemTemplate = (sortType, currentSortType) => {
 
   return `<div class="trip-sort__item  trip-sort__item--${sortType}">
-    <input data-sort-type="${sortType}" id="sort-${sortType}" class="trip-sort__input  visually-hidden" type="radio" name="trip-sort" value="sort-${sortType}" ${isDefault ? `checked` : ``}>
+    <input data-sort-type="${sortType}" id="sort-${sortType}" class="trip-sort__input  visually-hidden" type="radio" name="trip-sort" value="sort-${sortType}" ${sortType === currentSortType ? `checked` : ``}>
     <label class="trip-sort__btn" for="sort-${sortType}">
       ${capitalize(sortType)}
     </label>
@@ -15,8 +14,8 @@ const createEventSortItemTemplate = (sortType) => {
 };
 
 // Возвращает шаблон блока сортировки точек маршрута
-const createEventSortTemplate = () => {
-  const sortItemsTemplate = Object.values(SortType).map((sortType) => createEventSortItemTemplate(sortType)).join(``);
+const createEventSortTemplate = (currentSortType) => {
+  const sortItemsTemplate = Object.values(SortType).map((sortType) => createEventSortItemTemplate(sortType, currentSortType)).join(``);
 
   return `<form class="trip-events__trip-sort  trip-sort" action="#" method="get">
       <span class="trip-sort__item  trip-sort__item--day">Day</span>
@@ -26,13 +25,14 @@ const createEventSortTemplate = () => {
 };
 
 export default class SortView extends AbstractView {
-  constructor() {
+  constructor(currentSortType) {
     super();
+    this._currentSortType = currentSortType;
     this._sortChangeHandler = this._sortChangeHandler.bind(this);
   }
 
   getTemplate() {
-    return createEventSortTemplate();
+    return createEventSortTemplate(this._currentSortType);
   }
 
   _sortChangeHandler(evt) {

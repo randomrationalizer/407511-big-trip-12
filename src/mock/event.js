@@ -1,12 +1,5 @@
-import {EVENT_TYPES, EVENT_OFFERS, eventTypeToOffers, CITIES} from "../const.js";
+import {EVENT_TYPES, EVENT_OFFERS, eventTypeToOffers} from "../const.js";
 
-// Максимальное количество предложений в описании
-const MAX_SENTENCES_COUNT = 5;
-
-// "Рыба" описания города
-const CITY_DESCRIPTION_MOCK = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras aliquet varius magna, non porta ligula feugiat eget. Fusce tristique felis at fermentum pharetra. Aliquam id orci ut lectus varius viverra. Nullam nunc ex, convallis sed finibus eget, sollicitudin eget ante. Phasellus eros mauris, condimentum sed nibh vitae, sodales efficitur ipsum. Sed blandit, eros vel aliquam faucibus, purus ex euismod diam, eu luctus nunc ante ut dui. Sed sed nisi sed augue convallis suscipit in sed felis. Aliquam erat volutpat. Nunc fermentum tortor ac porta dapibus. In rutrum ac purus sit amet tempus.`;
-
-const MAX_PHOTOS_COUNT = 10;
 const MAX_OFFERS_COUNT = 5;
 const MAX_PRICE = 500;
 const MIN_PRICE = 10;
@@ -20,44 +13,12 @@ const getRandomInteger = (a = 0, b = 1) => {
 };
 
 // Генерирует случайный id (только для моков)
-const generateId = () => Date.now() + getRandomInteger(0, 10000);
+export const generateId = () => Date.now() + getRandomInteger(0, 10000);
 
 // Возвращает случайное значение из массива
 const getRandomValue = (values) => {
   const randomIndex = getRandomInteger(0, values.length - 1);
   return values[randomIndex];
-};
-
-// Создаёт случайное описание пункта назначения, длина описания - от 1 до 5 передложений
-const generateDescription = () => {
-  let sentences = CITY_DESCRIPTION_MOCK.split(`. `);
-
-  sentences[sentences.length - 1] = sentences[sentences.length - 1].replace(`.`, ``);
-
-  const sentencesCount = getRandomInteger(1, MAX_SENTENCES_COUNT);
-
-  const description = new Array(sentencesCount).fill().map(() => {
-    const randomIndex = getRandomInteger(0, sentences.length - 1);
-    return sentences.splice(randomIndex, 1) + `.`;
-  }).join(` `);
-
-  return description;
-};
-
-// Создаёт массив ссылок фотографий пункта назначения - от 1 до 10
-const generatePhotos = () => {
-  const photosCount = getRandomInteger(1, MAX_PHOTOS_COUNT);
-  const photos = new Array(photosCount).fill().map(() => `http://picsum.photos/248/152?r=${Math.random()}`);
-
-  return photos;
-};
-
-// Создаёт моковый объект описания города
-export const generateCityInfo = () => {
-  return {
-    description: generateDescription(),
-    pics: generatePhotos()
-  };
 };
 
 // Создаёт массив дополнительных опций для точки маршрута - от 0 до 5
@@ -110,7 +71,7 @@ const generateEndDate = (startDate) => {
 
 
 // Создаёт моковый объект точки маршрута
-export const generateEvent = () => {
+export const generateEvent = (destinations) => {
   const eventType = getRandomValue(EVENT_TYPES);
   const startDate = generateDate();
   const endDate = generateEndDate(startDate);
@@ -118,8 +79,7 @@ export const generateEvent = () => {
   return {
     id: generateId(),
     type: eventType,
-    destination: getRandomValue(CITIES),
-    cityInfo: generateCityInfo(),
+    destination: getRandomValue(destinations),
     startDate,
     endDate,
     price: getRandomInteger(MIN_PRICE, MAX_PRICE),

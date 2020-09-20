@@ -1,6 +1,3 @@
-// Названия городов назначения
-export const CITIES = [`Amsterdam`, `Vienna`, `Geneva`, `Lucerne`, `Chamonix`, `Saint Petersburg`];
-
 // Типы событий
 export const EVENT_TYPES = [`taxi`, `bus`, `train`, `ship`, `transport`, `drive`, `flight`, `check-in`, `sightseeing`, `restaurant`];
 
@@ -91,4 +88,24 @@ export const SortType = {
   DEFAULT: `event`,
   TIME_DOWN: `time`,
   PRICE_DOWN: `price`
+};
+
+// Типы пользовательских событий
+export const UserAction = {
+  UPDATE_EVENT: `UPDATE_EVENT`,
+  ADD_EVENT: `ADD_EVENT`,
+  DELETE_EVENT: `DELETE_EVENT`
+};
+
+// Степень вносимых изменений
+export const UpdateType = {
+  PATCH: `PATCH`,
+  MINOR: `MINOR`,
+  MAJOR: `MAJOR`
+};
+
+export const FilterType = {
+  EVERYTHING: `everything`,
+  FUTURE: `future`,
+  PAST: `past`
 };
