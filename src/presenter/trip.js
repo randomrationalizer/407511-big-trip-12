@@ -9,11 +9,12 @@ import EventsListView from "../view/events-list.js";
 import {SortType, UserAction, UpdateType} from "../const.js";
 import {sortByPrice, sortByTime, sortByDate, formatDateWithoutTime} from "../utils/event.js";
 import EventNewPresenter from "./event-new.js";
+import LoadingView from "../view/loading.js";
 
 
 // Конструктор маршрута путешествия - создаёт, отрисовывает элементы, навешивает обработчики
 export default class Trip {
-  constructor(tripContainer, eventsModel, offersModel, filterModel, destinationsModel) {
+  constructor(tripContainer, eventsModel, offersModel, filterModel, destinationsModel, api) {
     this._tripContainer = tripContainer;
     this._eventsModel = eventsModel;
     this._offersModel = offersModel;
@@ -22,9 +23,12 @@ export default class Trip {
     this._currentSort = SortType.DEFAULT;
     this._eventPresenter = {};
     this._sortComponent = null;
+    this._isLoading = true;
+    this._api = api;
 
     this._noEventsComponent = new NoEventsView();
     this._daysListComponent = new DaysListView();
+    this._loadingMsgComponent = new LoadingView();
 
     this._handleSortChange = this._handleSortChange.bind(this);
     this._handleViewAction = this._handleViewAction.bind(this);
@@ -47,6 +51,10 @@ export default class Trip {
 
   _renderNoEvents() {
     render(this._tripContainer, this._noEventsComponent, RenderPosition.BEFOREEND);
+  }
+
+  _renderLoadingMsg() {
+    render(this._tripContainer, this._loadingMsgComponent, RenderPosition.BEFOREEND);
   }
 
   _handleSortChange(sortType) {
@@ -89,7 +97,9 @@ export default class Trip {
   _handleViewAction(actionType, updateType, update) {
     switch (actionType) {
       case UserAction.UPDATE_EVENT:
-        this._eventsModel.updateEvent(updateType, update);
+        this._api.updateEvent(update).then((response) => {
+          this._eventsModel.updateEvent(updateType, response);
+        });
         break;
       case UserAction.ADD_EVENT:
         this._eventsModel.addEvent(updateType, update);
@@ -118,6 +128,11 @@ export default class Trip {
       // обновление всей страницы (например, при переключении фильтра)
       case UpdateType.MAJOR:
         this._clearTrip({resetSortType: true});
+        this._renderTrip();
+        break;
+      case UpdateType.INIT:
+        this._isLoading = false;
+        remove(this._loadingMsgComponent);
         this._renderTrip();
         break;
     }
@@ -181,6 +196,7 @@ export default class Trip {
     remove(this._daysListComponent);
     remove(this._sortComponent);
     remove(this._noEventsComponent);
+    remove(this._loadingMsgComponent);
 
     if (resetSortType) {
       this._currentSort = SortType.DEFAULT;
@@ -195,6 +211,11 @@ export default class Trip {
 
   // Отрисовывает все события и дни маршрута путешествия
   _renderTrip() {
+    if (this._isLoading) {
+      this._renderLoadingMsg();
+      return;
+    }
+
     const events = this._getEvents();
     if (events.length === 0) {
       this._renderNoEvents();

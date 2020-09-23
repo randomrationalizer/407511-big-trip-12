@@ -1,7 +1,7 @@
 import {RenderPosition, render, remove} from "../utils/render.js";
 import EventEditView from "../view/event-edit.js";
 import {UserAction, UpdateType} from "../const.js";
-import {generateId} from "../mock/event.js";
+import {generateId} from "../utils/event.js";
 
 const BLANK_EVENT = {
   type: `bus`,
@@ -9,7 +9,7 @@ const BLANK_EVENT = {
   startDate: null,
   endDate: null,
   price: ``,
-  offers: null,
+  offers: [],
   isFavorite: false
 };
 

@@ -1,4 +1,4 @@
-import {TRANSFER_EVENTS, eventTypeToOffers} from "../const.js";
+import {TRANSFER_EVENTS} from "../const.js";
 import moment from "moment";
 
 // Возвращает дату в виде строки в формате: "день/месяц/год часы:минуты"
@@ -64,22 +64,12 @@ export const sortByDate = (first, second) => {
   return first.startDate.getTime() - second.startDate.getTime();
 };
 
-export const findOffer = (offers, offerType) => {
-  return offers.find((offer) => offer.type === offerType);
-};
-
-export const isAnyOffersAvailable = (eventType) => {
-  return eventTypeToOffers[eventType] !== null;
-};
-
 export const getAvailableOffers = (offers, eventType) => {
-  const availableOffers = eventTypeToOffers[eventType];
+  return offers.find((eventOffersMatch) => eventOffersMatch.type === eventType).offers;
+};
 
-  if (availableOffers === null) {
-    return null;
-  }
-
-  return availableOffers.map((offer) => findOffer(offers, offer));
+export const isAnyOffersAvailable = (offers, eventType) => {
+  return getAvailableOffers(offers, eventType) !== null;
 };
 
 export const isDatesEqual = (firstEvent, secondEvent) => {
@@ -104,3 +94,14 @@ export const getCurrentDate = () => {
 
   return new Date(currentDate);
 };
+
+// Возвращает случайное целое число в диапазоне от a до b (включая b)
+const getRandomInteger = (a = 0, b = 1) => {
+  const lower = Math.ceil(Math.min(a, b));
+  const upper = Math.floor(Math.max(a, b));
+
+  return Math.floor(lower + Math.random() * (upper - lower + 1));
+};
+
+// Генерирует случайный id (только для моков)
+export const generateId = () => Date.now() + getRandomInteger(0, 10000);

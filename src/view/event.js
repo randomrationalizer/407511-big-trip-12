@@ -6,8 +6,6 @@ import AbstractView from "./abstract.js";
 // Возвращает шаблон дополнительных опций точки маршрута
 const createOffersTemplate = (offers) => {
 
-  // const selectedOffers = offers.map((offer) => EVENT_OFFERS.find((elem) => elem.type === offer));
-
   return `<h4 class="visually-hidden">Offers:</h4>
     <ul class="event__selected-offers">
 

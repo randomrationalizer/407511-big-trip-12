@@ -1,6 +1,5 @@
 import MenuView from "./view/menu.js";
 import StatisticsView from "./view/statistic.js";
-import {generateEvent} from "./mock/event.js";
 import {RenderPosition, render, remove} from "./utils/render.js";
 import TripPresenter from "./presenter/trip.js";
 import FilterPresenter from "./presenter/filter.js";
@@ -9,38 +8,29 @@ import EventsModel from "./model/events.js";
 import FilterModel from "./model/filter.js";
 import OffersModel from "./model/offers.js";
 import DestinationsModel from "./model/destinations.js";
-import {EVENT_OFFERS, MenuItem, UpdateType, FilterType} from "./const.js";
-import {generateDestinations} from "./mock/destinations.js";
+import {MenuItem, UpdateType, FilterType} from "./const.js";
 
-const EVENT_COUNT = 20;
+import Api from "./api.js";
 
-// Генерация случайных точек маршрута
-const destinations = generateDestinations();
-const tripEvents = new Array(EVENT_COUNT).fill().map(() => generateEvent(destinations));
-
-const eventsModel = new EventsModel();
-eventsModel.setEvents(tripEvents);
-
-const filterModel = new FilterModel();
-
-const offersModel = new OffersModel();
-offersModel.setOffers(EVENT_OFFERS);
-
-const destinationsModel = new DestinationsModel();
-destinationsModel.setDestinations(destinations);
-
+const AUTHORIZATION = `Basic d2fsafsfafa5852ca`;
+const END_POINT = `https://12.ecmascript.pages.academy/big-trip`;
 
 const tripMainElement = document.querySelector(`.trip-main`);
 const tripControlsElement = tripMainElement.querySelector(`.trip-controls`);
 const tripControlsFirstHeadingElement = tripControlsElement.querySelector(`h2`);
 const tripContainerElement = document.querySelector(`.trip-events`);
+const newEventBtnElement = tripMainElement.querySelector(`.trip-main__event-add-btn`);
 
-// Отрисовка меню
+const api = new Api(END_POINT, AUTHORIZATION);
+
+const eventsModel = new EventsModel();
+const filterModel = new FilterModel();
+const offersModel = new OffersModel();
+const destinationsModel = new DestinationsModel();
+
 const menuComponent = new MenuView();
-render(tripControlsFirstHeadingElement, menuComponent, RenderPosition.AFTEREND);
 
-// Отрисовка дней и точек путешествия
-const tripPresenter = new TripPresenter(tripContainerElement, eventsModel, offersModel, filterModel, destinationsModel);
+const tripPresenter = new TripPresenter(tripContainerElement, eventsModel, offersModel, filterModel, destinationsModel, api);
 const filterPresenter = new FilterPresenter(tripControlsElement, filterModel, eventsModel);
 const tripInfoPresenter = new TripInfoPresenter(tripMainElement, eventsModel);
 
@@ -64,13 +54,11 @@ const handleMenuClick = (menuItem) => {
   }
 };
 
-menuComponent.setMenuClickHandler(handleMenuClick);
-
 const handleNewEventFormClose = () => {
-  tripMainElement.querySelector(`.trip-main__event-add-btn`).disabled = false;
+  newEventBtnElement.disabled = false;
 };
 
-tripMainElement.querySelector(`.trip-main__event-add-btn`).addEventListener(`click`, (evt) => {
+newEventBtnElement.addEventListener(`click`, (evt) => {
   evt.preventDefault();
   remove(statisticsComponent);
   filterModel.setFilter(UpdateType.MAJOR, FilterType.EVERYTHING);
@@ -79,6 +67,34 @@ tripMainElement.querySelector(`.trip-main__event-add-btn`).addEventListener(`cli
   evt.target.disabled = true;
 });
 
+newEventBtnElement.disabled = true;
 tripInfoPresenter.init();
-filterPresenter.init();
 tripPresenter.init();
+
+
+api.getDestinations()
+  .then((destinations) => {
+    destinationsModel.setDestinations(destinations);
+    api.getOffers().
+      then((offers) => {
+        offersModel.setOffers(offers);
+        api.getEvents()
+          .then((tripEvents) => {
+            eventsModel.setEvents(UpdateType.INIT, tripEvents);
+          })
+          .catch(() => {
+            eventsModel.setEvents(UpdateType.INIT, []);
+          })
+          .finally(() => {
+            render(tripControlsFirstHeadingElement, menuComponent, RenderPosition.AFTEREND);
+            menuComponent.setMenuClickHandler(handleMenuClick);
+            filterPresenter.init();
+            newEventBtnElement.disabled = false;
+          });
+      });
+  })
+  .catch(() => {
+    // destinationsModel.setDestinations([]);
+    eventsModel.setEvents(UpdateType.INIT, []);
+    newEventBtnElement.disabled = true;
+  });

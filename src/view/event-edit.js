@@ -1,5 +1,5 @@
 import {EVENT_TYPES, TRANSFER_EVENTS} from "../const.js";
-import {formatDate, createPreposition, getAvailableOffers, isAnyOffersAvailable, findOffer} from "../utils/event.js";
+import {formatDate, createPreposition, getAvailableOffers, isAnyOffersAvailable} from "../utils/event.js";
 import {capitalize} from "../utils/common.js";
 import SmartView from "./smart.js";
 import flatpickr from "flatpickr";
@@ -11,14 +11,14 @@ const BLANK_EVENT = {
   startDate: null,
   endDate: null,
   price: ``,
-  offers: null,
+  offers: [],
   isFavorite: false
 };
 
 // Возвращает шаблон элемента списка типов точки маршрута
 const createEventTypeItemTemplates = (types, selectedType) => {
   return `${types.map((type) => `<div class="event__type-item">
-    <input id="event-type-taxi-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${type}" ${type === selectedType ? `checked` : ``}>
+    <input id="event-type-${type}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${type}" ${type === selectedType ? `checked` : ``}>
     <label class="event__type-label  event__type-label--${type}" for="event-type-${type}">${capitalize(type)}</label>
   </div>`).join(``)}`;
 };
@@ -58,7 +58,7 @@ const createDestinationTemplate = (cities, destination, type) => {
 
 // Возвращает шаблон блока с описанием пункта назначения
 const createCityInfoTemplate = (destination) => {
-  const {description, pics} = destination;
+  const {description, pictures} = destination;
 
   return `<section class="event__section  event__section--destination">
     <h3 class="event__section-title  event__section-title--destination">Destination</h3>
@@ -66,7 +66,7 @@ const createCityInfoTemplate = (destination) => {
 
     <div class="event__photos-container">
       <div class="event__photos-tape">
-        ${pics.length > 0 ? pics.map((pic) => `<img class="event__photo" src="${pic.src}" alt="${pic.description}">`).join(``) : ``}
+        ${pictures.length > 0 ? pictures.map((picture) => `<img class="event__photo" src="${picture.src}" alt="${picture.description}">`).join(``) : ``}
       </div>
     </div>
   </section>`;
@@ -89,16 +89,16 @@ const createDateEditTemplate = (start, end) => {
 };
 
 // Возвращает шаблон блока дополнительных опций точки маршрута
-const createOffersTemplate = (availableOffers, selection) => {
+const createOffersTemplate = (availableOffers, type, destination) => {
 
   return `<section class="event__section  event__section--offers">
     <h3 class="event__section-title  event__section-title--offers">Offers</h3>
 
     <div class="event__available-offers">
 
-      ${availableOffers.map((offer) => `<div class="event__offer-selector">
-        <input data-offer-type="${offer.type}" class="event__offer-checkbox  visually-hidden" id="event-offer-${offer.type}" type="checkbox" name="event-offer-${offer.type}" ${selection[offer.type] ? `checked` : ``}>
-        <label class="event__offer-label" for="event-offer-${offer.type}">
+      ${availableOffers.map((offer, index) => `<div class="event__offer-selector">
+        <input data-offer-title="${offer.title}" class="event__offer-checkbox  visually-hidden" id="event-offer-${type}-${destination}-${index}" type="checkbox" name="event-offer-${type}-${destination}-${index}" ${offer.isSelected ? `checked` : ``}>
+        <label class="event__offer-label" for="event-offer-${type}-${destination}-${index}">
           <span class="event__offer-title">${offer.title}</span>
           &plus;
           &euro;&nbsp;<span class="event__offer-price">${offer.price}</span>
@@ -109,15 +109,15 @@ const createOffersTemplate = (availableOffers, selection) => {
 };
 
 // Возвращает шаблон формы редактирования/создания точки маршрута
-const createEventEditFormTemplate = (cities, data) => {
-  const {type, destination, startDate, endDate, price, isOffersAvailable, availableOffers, offersSelection, isFavorite, isNewEvent} = data;
+const createEventEditFormTemplate = (destinations, data) => {
+  const {type, destination, startDate, endDate, price, isOffersAvailable, availableOffers, isFavorite, isNewEvent} = data;
 
   const eventTypeListTemplate = createEventTypeTemplate(type);
-  const destinationTemplate = createDestinationTemplate(cities, destination, type);
-  const dateTemplate = createDateEditTemplate(startDate, endDate);
-  const offersTemplate = isOffersAvailable ? createOffersTemplate(availableOffers, offersSelection) : ``;
-
+  const destinationTemplate = createDestinationTemplate(destinations, destination, type);
   const cityInfoTemplate = destination ? createCityInfoTemplate(destination) : ``;
+  const dateTemplate = createDateEditTemplate(startDate, endDate);
+  const offersTemplate = isOffersAvailable ? createOffersTemplate(availableOffers, type, destination.name) : ``;
+
   const isSubmitDisabled = startDate === null || endDate === null;
 
   return `<form class="trip-events__item  event  event--edit" action="#" method="post">
@@ -197,46 +197,42 @@ export default class EventEditView extends SmartView {
   // Преобразует объект точки маршута в объект с данными
   static parseEventToData(allOffers, tripEvent) {
     const availableOffers = getAvailableOffers(allOffers, tripEvent.type);
-    let offersSelection = {};
-
-    if (availableOffers !== null) {
-      if (tripEvent.offers !== null) {
-        availableOffers.forEach((offer) => {
-          const isSelected = tripEvent.offers.some((tripEventOffer) => tripEventOffer.type === offer.type);
-          offersSelection[offer.type] = isSelected;
-        });
-      } else {
-        availableOffers.forEach((offer) => {
-          offersSelection[offer.type] = false;
-        });
-      }
-    }
-
+    const isOffersAvailable = availableOffers.length !== 0;
     const isNewEvent = tripEvent.startDate === null && tripEvent.endDate === null ? true : false;
 
-    return Object.assign({}, tripEvent, {isOffersAvailable: availableOffers !== null, availableOffers, offersSelection, isNewEvent});
+    return Object.assign(
+        {},
+        tripEvent,
+        {
+          isNewEvent,
+          isOffersAvailable,
+          availableOffers: availableOffers.map((offer) => {
+            return Object.assign({}, offer,
+                {
+                  isSelected: tripEvent.offers.some((tripEventOffer) => tripEventOffer.title === offer.title)
+                }
+            );
+          })
+        }
+    );
   }
 
   // Преобразует объект с данными в объект точки маршрута
-  static parseDataToEvent(allOffers, data) {
+  static parseDataToEvent(data) {
     data = Object.assign({}, data);
     let selectedOffers = [];
 
     if (data.isOffersAvailable) {
-      const availableOffers = Object.keys(data.offersSelection);
-
-      for (const offer of availableOffers) {
-        if (data.offersSelection[offer] === true) {
-          selectedOffers.push(findOffer(allOffers, offer));
-        }
-      }
+      selectedOffers = data.availableOffers.filter((offer) => offer.isSelected === true).map((selectedOffer) => {
+        delete selectedOffer.isSelected;
+        return selectedOffer;
+      });
     }
 
-    data.offers = selectedOffers.length !== 0 ? selectedOffers : null;
+    data.offers = selectedOffers;
 
     delete data.isOffersAvailable;
     delete data.availableOffers;
-    delete data.offersSelection;
     delete data.isNewEvent;
 
     return data;
@@ -248,14 +244,14 @@ export default class EventEditView extends SmartView {
 
   _resetOffersSelection(eventType) {
     const availableOffers = getAvailableOffers(this._offers, eventType);
-    let selection = {};
-    if (availableOffers !== null) {
+
+    if (availableOffers.length !== 0) {
       availableOffers.forEach((offer) => {
-        selection[offer.type] = false;
+        offer.isSelected = false;
       });
     }
 
-    return selection;
+    return availableOffers;
   }
 
   reset(tripEvent) {
@@ -279,7 +275,7 @@ export default class EventEditView extends SmartView {
 
   _formSubmitHandler(evt) {
     evt.preventDefault();
-    this._callback.formSubmit(EventEditView.parseDataToEvent(this._offers, this._data));
+    this._callback.formSubmit(EventEditView.parseDataToEvent(this._data));
   }
 
   _favoriteToggleHandler(evt) {
@@ -288,18 +284,24 @@ export default class EventEditView extends SmartView {
   }
 
   _offersChangeHandler(evt) {
+    if (evt.target.tagName !== `INPUT`) {
+      return;
+    }
+
     evt.preventDefault();
     this.updateData({
-      offersSelection: Object.assign(
-          {},
-          this._data.offersSelection,
-          {[evt.target.dataset.offerType]: evt.target.checked}
-      )});
+      availableOffers: this._data.availableOffers.map((offer) => {
+        if (offer.title === evt.target.dataset.offerTitle) {
+          offer.isSelected = evt.target.checked;
+        }
+        return offer;
+      })
+    });
   }
 
   _formResetHandler(evt) {
     evt.preventDefault();
-    this._callback.formReset(EventEditView.parseDataToEvent(this._offers, this._data));
+    this._callback.formReset(EventEditView.parseDataToEvent(this._data));
   }
 
   setFormResetHandler(callback) {
@@ -341,7 +343,6 @@ export default class EventEditView extends SmartView {
       evt.target.reportValidity();
     } else {
       evt.target.setCustomValidity(``);
-      // evt.target.reportValidity();
 
       this.updateData({
         price: priceValue
@@ -350,14 +351,18 @@ export default class EventEditView extends SmartView {
   }
 
   _eventTypeChangeHandler(evt) {
+    if (evt.target.tagName !== `INPUT`) {
+      return;
+    }
+
     evt.preventDefault();
-    const eventType = evt.target.textContent.toLowerCase();
+    const eventType = evt.target.value;
     const defaultOffersSelection = this._resetOffersSelection(eventType);
+
     this.updateData({
       type: eventType,
-      isOffersAvailable: isAnyOffersAvailable(eventType),
-      availableOffers: getAvailableOffers(this._offers, eventType),
-      offersSelection: defaultOffersSelection
+      isOffersAvailable: isAnyOffersAvailable(this._offers, eventType),
+      availableOffers: defaultOffersSelection,
     });
   }
 
