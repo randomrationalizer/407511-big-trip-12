@@ -35,7 +35,7 @@ export default class Trip {
     this._handleModelEvent = this._handleModelEvent.bind(this);
     this._handleModeChange = this._handleModeChange.bind(this);
 
-    this._eventNewPresenter = new EventNewPresenter(this._daysListComponent, this._handleViewAction, this._offersModel, this._destinationsModel);
+    this._eventNewPresenter = new EventNewPresenter(this._tripContainer, this._handleViewAction, this._offersModel, this._destinationsModel);
   }
 
   init() {
@@ -162,6 +162,10 @@ export default class Trip {
   }
 
   createEvent(callback) {
+    if (this._eventsModel.getEvents().length === 0) {
+      remove(this._noEventsComponent);
+    }
+
     this._eventNewPresenter.init(callback);
   }
 

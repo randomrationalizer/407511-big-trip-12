@@ -15,8 +15,8 @@ const BLANK_EVENT = {
 
 // Презентер формы создания новой точки маршрута
 export default class EventNew {
-  constructor(daysListContainer, changeData, offersModel, destinationsModel) {
-    this._daysListContainer = daysListContainer;
+  constructor(tripContainer, changeData, offersModel, destinationsModel) {
+    this._tripContainer = tripContainer;
     this._changeData = changeData;
     this._offersModel = offersModel;
     this._destinationsModel = destinationsModel;
@@ -41,7 +41,7 @@ export default class EventNew {
     this._eventEditComponent.setFormSubmitHandler(this._handleFormSubmit);
     this._eventEditComponent.setFormResetHandler(this._handleFormReset);
 
-    render(this._daysListContainer, this._eventEditComponent, RenderPosition.AFTERBEGIN);
+    render(this._tripContainer, this._eventEditComponent, RenderPosition.AFTERBEGIN);
 
     document.addEventListener(`keydown`, this._escKeyDownHandler);
   }
