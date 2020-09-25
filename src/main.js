@@ -94,7 +94,6 @@ api.getDestinations()
       });
   })
   .catch(() => {
-    // destinationsModel.setDestinations([]);
     eventsModel.setEvents(UpdateType.INIT, []);
     newEventBtnElement.disabled = true;
   });

@@ -1,7 +1,6 @@
 import {RenderPosition, render, remove} from "../utils/render.js";
 import EventEditView from "../view/event-edit.js";
 import {UserAction, UpdateType} from "../const.js";
-import {generateId} from "../utils/event.js";
 
 const BLANK_EVENT = {
   type: `bus`,
@@ -65,10 +64,27 @@ export default class EventNew {
     this._changeData(
         UserAction.ADD_EVENT,
         UpdateType.MINOR,
-        // задаёт id новой точке маршрута
-        Object.assign({id: generateId()}, tripEvent)
+        tripEvent
     );
-    this.destroy();
+  }
+
+  setSaving() {
+    this._eventEditComponent.updateData({
+      isDisabled: true,
+      isSaving: true
+    });
+  }
+
+  setAborting() {
+    const resetFormState = () => {
+      this._eventEditComponent.updateData({
+        isDisabled: false,
+        isSaving: false,
+        isDeleting: false
+      });
+    };
+
+    this._eventEditComponent.shake(resetFormState);
   }
 
   _handleFormReset() {
