@@ -56,6 +56,9 @@ const handleMenuClick = (menuItem) => {
 
 const handleNewEventFormClose = () => {
   newEventBtnElement.disabled = false;
+  if (eventsModel.getEvents().length === 0) {
+    tripPresenter.init();
+  }
 };
 
 newEventBtnElement.addEventListener(`click`, (evt) => {
@@ -94,7 +97,6 @@ api.getDestinations()
       });
   })
   .catch(() => {
-    // destinationsModel.setDestinations([]);
     eventsModel.setEvents(UpdateType.INIT, []);
     newEventBtnElement.disabled = true;
   });

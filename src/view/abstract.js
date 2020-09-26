@@ -1,9 +1,10 @@
 import {createElement} from "../utils/render.js";
 
+const SHAKE_ANIMATION_TIMEOUT = 600;
+
 // Абстрактный класс, от которого наследуются компоненты
 export default class Abstract {
   constructor() {
-    // нельзя создать экземпляр абстрактного класса
     if (new.target === Abstract) {
       throw new Error(`Can't instantiate Abstract class, only concrete one.`);
     }
@@ -13,7 +14,6 @@ export default class Abstract {
   }
 
   getTemplate() {
-    // чтобы не забыть прописать метод получения шаблона в компонентах
     throw new Error(`Abstract method not implemented: getTemplate`);
   }
 
@@ -27,5 +27,13 @@ export default class Abstract {
 
   removeElement() {
     this._element = null;
+  }
+
+  shake(callback) {
+    this.getElement().style.animation = `shake ${SHAKE_ANIMATION_TIMEOUT / 1000}s`;
+    setTimeout(() => {
+      this.getElement().style.animation = ``;
+      callback();
+    }, SHAKE_ANIMATION_TIMEOUT);
   }
 }

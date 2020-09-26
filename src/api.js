@@ -2,7 +2,9 @@ import EventsModel from "./model/events.js";
 
 const Method = {
   GET: `GET`,
-  PUT: `PUT`
+  PUT: `PUT`,
+  POST: `POST`,
+  DELETE: `DELETE`
 };
 
 const SuccessHTTPStatusRange = {
@@ -43,6 +45,24 @@ export default class Api {
     .then(EventsModel.adaptToClient);
   }
 
+  deleteEvent(tripEvent) {
+    return this._load({
+      url: `points/${tripEvent.id}`,
+      method: Method.DELETE
+    });
+  }
+
+  addEvent(tripEvent) {
+    return this._load({
+      url: `points`,
+      method: Method.POST,
+      body: JSON.stringify(EventsModel.adaptToServer(tripEvent)),
+      headers: new Headers({"Content-Type": `application/json`})
+    })
+    .then(Api.toJSON)
+    .then(EventsModel.adaptToClient);
+  }
+
   _load({
     url,
     method = Method.GET,
@@ -57,7 +77,6 @@ export default class Api {
     )
       .then(Api.checkStatus)
       .catch(Api.catchError);
-
   }
 
   static checkStatus(response) {
@@ -76,4 +95,3 @@ export default class Api {
     throw err;
   }
 }
-

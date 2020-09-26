@@ -1,7 +1,6 @@
 import {RenderPosition, render, remove} from "../utils/render.js";
 import EventEditView from "../view/event-edit.js";
 import {UserAction, UpdateType} from "../const.js";
-import {generateId} from "../utils/event.js";
 
 const BLANK_EVENT = {
   type: `bus`,
@@ -16,8 +15,8 @@ const BLANK_EVENT = {
 
 // Презентер формы создания новой точки маршрута
 export default class EventNew {
-  constructor(daysListContainer, changeData, offersModel, destinationsModel) {
-    this._daysListContainer = daysListContainer;
+  constructor(tripContainer, changeData, offersModel, destinationsModel) {
+    this._tripContainer = tripContainer;
     this._changeData = changeData;
     this._offersModel = offersModel;
     this._destinationsModel = destinationsModel;
@@ -42,7 +41,7 @@ export default class EventNew {
     this._eventEditComponent.setFormSubmitHandler(this._handleFormSubmit);
     this._eventEditComponent.setFormResetHandler(this._handleFormReset);
 
-    render(this._daysListContainer, this._eventEditComponent, RenderPosition.AFTERBEGIN);
+    render(this._tripContainer, this._eventEditComponent, RenderPosition.AFTERBEGIN);
 
     document.addEventListener(`keydown`, this._escKeyDownHandler);
   }
@@ -65,10 +64,27 @@ export default class EventNew {
     this._changeData(
         UserAction.ADD_EVENT,
         UpdateType.MINOR,
-        // задаёт id новой точке маршрута
-        Object.assign({id: generateId()}, tripEvent)
+        tripEvent
     );
-    this.destroy();
+  }
+
+  setSaving() {
+    this._eventEditComponent.updateData({
+      isDisabled: true,
+      isSaving: true
+    });
+  }
+
+  setAborting() {
+    const resetFormState = () => {
+      this._eventEditComponent.updateData({
+        isDisabled: false,
+        isSaving: false,
+        isDeleting: false
+      });
+    };
+
+    this._eventEditComponent.shake(resetFormState);
   }
 
   _handleFormReset() {
