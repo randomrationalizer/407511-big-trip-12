@@ -11,9 +11,22 @@ import DestinationsModel from "./model/destinations.js";
 import {MenuItem, UpdateType, FilterType} from "./const.js";
 
 import Api from "./api/index.js";
+import Store from "./api/store.js";
+import Provider from "./api/provider.js";
+
+const DataType = {
+  EVENTS: `events`,
+  OFFERS: `offers`,
+  DESTINATIONS: `destinations`
+};
 
 const AUTHORIZATION = `Basic d26665852ca`;
 const END_POINT = `https://12.ecmascript.pages.academy/big-trip`;
+const STORE_PREFIX = `big-trip-localstorage`;
+const STORE_VER = `v12`;
+const EVENTS_STORE_NAME = `${STORE_PREFIX}-${DataType.EVENTS}-${STORE_VER}`;
+const DESTINATIONS_STORE_NAME = `${STORE_PREFIX}-${DataType.DESTINATIONS}-${STORE_VER}`;
+const OFFERS_STORE_NAME = `${STORE_PREFIX}-${DataType.OFFERS}-${STORE_VER}`;
 
 const tripMainElement = document.querySelector(`.trip-main`);
 const tripControlsElement = tripMainElement.querySelector(`.trip-controls`);
@@ -22,6 +35,10 @@ const tripContainerElement = document.querySelector(`.trip-events`);
 const newEventBtnElement = tripMainElement.querySelector(`.trip-main__event-add-btn`);
 
 const api = new Api(END_POINT, AUTHORIZATION);
+const eventsStore = new Store(EVENTS_STORE_NAME, window.localStorage);
+const destinationsStore = new Store(DESTINATIONS_STORE_NAME, window.localStorage);
+const offersStore = new Store(OFFERS_STORE_NAME, window.localStorage);
+const apiWithProvider = new Provider(api, eventsStore, destinationsStore, offersStore);
 
 const eventsModel = new EventsModel();
 const filterModel = new FilterModel();
@@ -30,7 +47,7 @@ const destinationsModel = new DestinationsModel();
 
 const menuComponent = new MenuView();
 
-const tripPresenter = new TripPresenter(tripContainerElement, eventsModel, offersModel, filterModel, destinationsModel, api);
+const tripPresenter = new TripPresenter(tripContainerElement, eventsModel, offersModel, filterModel, destinationsModel, apiWithProvider);
 const filterPresenter = new FilterPresenter(tripControlsElement, filterModel, eventsModel);
 const tripInfoPresenter = new TripInfoPresenter(tripMainElement, eventsModel);
 
@@ -75,13 +92,13 @@ tripInfoPresenter.init();
 tripPresenter.init();
 
 
-api.getDestinations()
+apiWithProvider.getDestinations()
   .then((destinations) => {
     destinationsModel.setDestinations(destinations);
-    api.getOffers().
+    apiWithProvider.getOffers().
       then((offers) => {
         offersModel.setOffers(offers);
-        api.getEvents()
+        apiWithProvider.getEvents()
           .then((tripEvents) => {
             eventsModel.setEvents(UpdateType.INIT, tripEvents);
           })
@@ -101,6 +118,7 @@ api.getDestinations()
     newEventBtnElement.disabled = true;
   });
 
+
 window.addEventListener(`load`, () => {
   navigator.serviceWorker.register(`/sw.js`)
     .then(() => {
@@ -108,4 +126,13 @@ window.addEventListener(`load`, () => {
     }).catch(() => {
     console.error(`ServiceWorker isn't available`); // eslint-disable-line
     });
+});
+
+window.addEventListener(`online`, () => {
+  document.title = document.title.replace(` [offline]`, ``);
+  apiWithProvider.sync();
+});
+
+window.addEventListener(`offline`, () => {
+  document.title += ` [offline]`;
 });
