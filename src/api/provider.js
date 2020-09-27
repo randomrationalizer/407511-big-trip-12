@@ -89,7 +89,7 @@ export default class Provider {
     if (Provider.isOnline()) {
       return this._api.addEvent(tripEvent)
         .then((newEvent) => {
-          this._eventsStore.setItem(newEvent.id, EventsModel.adaptToServer(Event));
+          this._eventsStore.setItem(newEvent.id, EventsModel.adaptToServer(newEvent));
           return newEvent;
         });
     }
