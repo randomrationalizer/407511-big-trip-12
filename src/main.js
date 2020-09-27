@@ -10,7 +10,7 @@ import OffersModel from "./model/offers.js";
 import DestinationsModel from "./model/destinations.js";
 import {MenuItem, UpdateType, FilterType} from "./const.js";
 
-import Api from "./api.js";
+import Api from "./api/index.js";
 
 const AUTHORIZATION = `Basic d26665852ca`;
 const END_POINT = `https://12.ecmascript.pages.academy/big-trip`;
