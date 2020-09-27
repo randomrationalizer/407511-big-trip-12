@@ -20,7 +20,7 @@ const DataType = {
   DESTINATIONS: `destinations`
 };
 
-const AUTHORIZATION = `Basic d26665852ca`;
+const AUTHORIZATION = `Basic d2fsfdasg84fsdfca`;
 const END_POINT = `https://12.ecmascript.pages.academy/big-trip`;
 const STORE_PREFIX = `big-trip-localstorage`;
 const STORE_VER = `v12`;

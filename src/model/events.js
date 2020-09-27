@@ -51,7 +51,7 @@ export default class EventsModel extends Observer {
         {
           price: tripEvent.base_price,
           startDate: tripEvent.date_from !== null ? new Date(tripEvent.date_from) : tripEvent.date_from,
-          endDate: tripEvent.date_to !== null ? new Date(tripEvent.date_to) : tripEvent.date_from,
+          endDate: tripEvent.date_to !== null ? new Date(tripEvent.date_to) : tripEvent.date_to,
           isFavorite: tripEvent.is_favorite
         }
     );
@@ -77,10 +77,10 @@ export default class EventsModel extends Observer {
         }
     );
 
-    delete tripEvent.price;
-    delete tripEvent.startDate;
-    delete tripEvent.endDate;
-    delete tripEvent.isFavorite;
+    delete adaptedEvent.price;
+    delete adaptedEvent.startDate;
+    delete adaptedEvent.endDate;
+    delete adaptedEvent.isFavorite;
 
     return adaptedEvent;
   }
