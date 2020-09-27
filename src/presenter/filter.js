@@ -26,6 +26,11 @@ export default class Filter {
 
     const filters = this._getFilters();
 
+    if ((filters.find((item) => item.type === this._currentFilter)).isDisabled) {
+      this._filterModel.setFilter(UpdateType.MAJOR, FilterType.EVERYTHING);
+      return;
+    }
+
     const prevFilterComponent = this._filterComponent;
     this._filterComponent = new FilterView(filters, this._currentFilter);
     this._filterComponent.setFilterTypeChangeHandler(this._handleFilterTypeChange);
