@@ -130,7 +130,10 @@ window.addEventListener(`load`, () => {
 
 window.addEventListener(`online`, () => {
   document.title = document.title.replace(` [offline]`, ``);
-  apiWithProvider.sync();
+
+  if (apiWithProvider.isSyncRequired) {
+    apiWithProvider.sync();
+  }
 });
 
 window.addEventListener(`offline`, () => {

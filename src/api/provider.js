@@ -20,6 +20,11 @@ export default class Provider {
     this._eventsStore = eventsStore;
     this._destinationsStore = destinationsStore;
     this._offersStore = offersStore;
+    this._isSyncRequired = false;
+  }
+
+  get isSyncRequired() {
+    return this._isSyncRequired;
   }
 
   getEvents() {
@@ -75,6 +80,7 @@ export default class Provider {
     }
 
     this._eventsStore.setItem(tripEvent.id, EventsModel.adaptToServer(Object.assign({}, tripEvent)));
+    this._isSyncRequired = true;
 
     return Promise.resolve(tripEvent);
   }
@@ -92,6 +98,7 @@ export default class Provider {
     const localNewEvent = Object.assign({}, tripEvent, {id: localNewEventId});
 
     this._eventsStore.setItem(localNewEvent.id, EventsModel.adaptToServer(localNewEvent));
+    this._isSyncRequired = true;
 
     return Promise.resolve(localNewEvent);
   }
@@ -103,6 +110,7 @@ export default class Provider {
     }
 
     this._eventsStore.removeItem(tripEvent.id);
+    this._isSyncRequired = true;
 
     return Promise.resolve();
   }
@@ -119,6 +127,8 @@ export default class Provider {
           const items = createStoreStructure([...createdEvents, ...updatedEvents]);
 
           this._eventsStore.setItems(items);
+
+          this._isSyncRequired = false;
         });
     }
 
