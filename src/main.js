@@ -12,7 +12,7 @@ import {MenuItem, UpdateType, FilterType} from "./const.js";
 
 import Api from "./api.js";
 
-const AUTHORIZATION = `Basic d2fsafsfafa5852ca`;
+const AUTHORIZATION = `Basic d26665852ca`;
 const END_POINT = `https://12.ecmascript.pages.academy/big-trip`;
 
 const tripMainElement = document.querySelector(`.trip-main`);
@@ -100,3 +100,12 @@ api.getDestinations()
     eventsModel.setEvents(UpdateType.INIT, []);
     newEventBtnElement.disabled = true;
   });
+
+window.addEventListener(`load`, () => {
+  navigator.serviceWorker.register(`/sw.js`)
+    .then(() => {
+      console.log(`ServiceWorker available`); // eslint-disable-line
+    }).catch(() => {
+    console.error(`ServiceWorker isn't available`); // eslint-disable-line
+    });
+});
