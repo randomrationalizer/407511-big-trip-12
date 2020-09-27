@@ -20,7 +20,7 @@ const DataType = {
   DESTINATIONS: `destinations`
 };
 
-const AUTHORIZATION = `Basic d2fsfdasg84fsdfca`;
+const AUTHORIZATION = `Basic d2f25sg596f89`;
 const END_POINT = `https://12.ecmascript.pages.academy/big-trip`;
 const STORE_PREFIX = `big-trip-localstorage`;
 const STORE_VER = `v12`;
@@ -66,7 +66,7 @@ const handleMenuClick = (menuItem) => {
       tripPresenter.destroy();
       menuComponent.setMenuItem(MenuItem.STATS);
       statisticsComponent = new StatisticsView(eventsModel.getEvents());
-      render(tripMainElement, statisticsComponent, RenderPosition.BEFOREEND);
+      render(tripContainerElement, statisticsComponent, RenderPosition.AFTEREND);
       break;
   }
 };
