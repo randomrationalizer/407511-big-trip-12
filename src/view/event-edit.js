@@ -316,7 +316,7 @@ export default class EventEditView extends SmartView {
         }
         return offer;
       })
-    });
+    }, true);
   }
 
   _formResetHandler(evt) {
