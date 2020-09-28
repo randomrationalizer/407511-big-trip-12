@@ -25,8 +25,9 @@ export default class Filter {
     this._currentFilter = this._filterModel.getFilter();
 
     const filters = this._getFilters();
+    const isNoFilteredEvents = filters.find((item) => item.type === this._currentFilter).isDisabled;
 
-    if ((filters.find((item) => item.type === this._currentFilter)).isDisabled) {
+    if (isNoFilteredEvents && this._currentFilter !== FilterType.EVERYTHING) {
       this._filterModel.setFilter(UpdateType.MAJOR, FilterType.EVERYTHING);
       return;
     }
