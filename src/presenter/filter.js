@@ -6,13 +6,15 @@ import {filter} from "../utils/filter.js";
 
 // Презентер фильтра точек маршрута
 export default class Filter {
-  constructor(filterContainer, filterModel, eventsModel) {
+  constructor(filterContainer, filterModel, eventsModel, changeDisplayMode) {
     this._filterContainer = filterContainer;
     this._filterModel = filterModel;
     this._eventsModel = eventsModel;
     this._currentFilter = null;
 
     this._filterComponent = null;
+
+    this._changeDisplayMode = changeDisplayMode;
 
     this._handleModelEvent = this._handleModelEvent.bind(this);
     this._handleFilterTypeChange = this._handleFilterTypeChange.bind(this);
@@ -53,6 +55,8 @@ export default class Filter {
     if (filterType === this._currentFilter) {
       return;
     }
+
+    this._changeDisplayMode();
 
     this._filterModel.setFilter(UpdateType.MAJOR, filterType);
   }

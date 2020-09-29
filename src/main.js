@@ -20,7 +20,7 @@ const DataType = {
   DESTINATIONS: `destinations`
 };
 
-const AUTHORIZATION = `Basic d2fbs2v8cv9`;
+const AUTHORIZATION = `Basic d2fb2sa68sv5v9`;
 const END_POINT = `https://12.ecmascript.pages.academy/big-trip`;
 const STORE_PREFIX = `big-trip-localstorage`;
 const STORE_VER = `v12`;
@@ -47,19 +47,22 @@ const apiWithProvider = new Provider(api, eventsStore, destinationsStore, offers
 
 
 const menuComponent = new MenuView();
+let statisticsComponent = null;
+
+const resetDisplayMode = () => {
+  menuComponent.setMenuItem(MenuItem.TABLE);
+  remove(statisticsComponent);
+};
 
 const tripPresenter = new TripPresenter(tripContainerElement, eventsModel, offersModel, filterModel, destinationsModel, apiWithProvider);
-const filterPresenter = new FilterPresenter(tripControlsElement, filterModel, eventsModel);
+const filterPresenter = new FilterPresenter(tripControlsElement, filterModel, eventsModel, resetDisplayMode);
 const tripInfoPresenter = new TripInfoPresenter(tripMainElement, eventsModel);
-
-let statisticsComponent = null;
 
 const handleMenuClick = (menuItem) => {
   switch (menuItem) {
     case MenuItem.TABLE:
-      remove(statisticsComponent);
       tripPresenter.destroy();
-      menuComponent.setMenuItem(MenuItem.TABLE);
+      resetDisplayMode();
       tripPresenter.init();
       break;
     case MenuItem.STATS:
@@ -81,10 +84,9 @@ const handleNewEventFormClose = () => {
 
 newEventBtnElement.addEventListener(`click`, (evt) => {
   evt.preventDefault();
-  remove(statisticsComponent);
+  resetDisplayMode();
   filterModel.setFilter(UpdateType.MAJOR, FilterType.EVERYTHING);
   tripPresenter.createEvent(handleNewEventFormClose);
-  menuComponent.setMenuItem(MenuItem.TABLE);
   evt.target.disabled = true;
 });
 
