@@ -189,12 +189,14 @@ export default class EventEditView extends SmartView {
     this._offers = this._offersModel.getOffers();
     this._destinations = this._destinationsModel.getDestinations();
 
+    this._event = tripEvent;
     this._data = EventEditView.parseEventToData(this._offers, tripEvent);
 
-    this._datepicker = null;
+    this._datepickerStart = null;
+    this._datepickerEnd = null;
 
     this._formSubmitHandler = this._formSubmitHandler.bind(this);
-    this._favoriteToggleHandler = this._favoriteToggleHandler.bind(this);
+    this._favoriteClickHandler = this._favoriteClickHandler.bind(this);
     this._rollupClickHandler = this._rollupClickHandler.bind(this);
     this._eventTypeChangeHandler = this._eventTypeChangeHandler.bind(this);
     this._offersChangeHandler = this._offersChangeHandler.bind(this);
@@ -204,7 +206,7 @@ export default class EventEditView extends SmartView {
     this._formResetHandler = this._formResetHandler.bind(this);
     this._priceInputHandler = this._priceInputHandler.bind(this);
     this._setHandlers();
-    this._setDatePicker();
+    this._setDatePickers();
   }
 
   // Преобразует объект точки маршута в объект с данными
@@ -282,14 +284,17 @@ export default class EventEditView extends SmartView {
     this.setFormResetHandler(this._callback.formReset);
     this._setHandlers();
     this.setRollupClickHandler(this._callback.rollupClick);
-    this._setDatePicker();
+    this._setDatePickers();
+    if (!this._data.isNewEvent) {
+      this.setFavoriteClickHandler(this._callback.favoriteClick);
+    }
   }
 
   // Удаляет ненужные календари при удалении элемента
   removeElement() {
     super.removeElement();
 
-    this._removeDatePicker();
+    this._removeDatePickers();
   }
 
   _formSubmitHandler(evt) {
@@ -297,9 +302,16 @@ export default class EventEditView extends SmartView {
     this._callback.formSubmit(EventEditView.parseDataToEvent(this._data));
   }
 
-  _favoriteToggleHandler(evt) {
+  _favoriteClickHandler(evt) {
     evt.preventDefault();
-    this.updateData({isFavorite: !this._data.isFavorite});
+    this._callback.favoriteClick(Object.assign(
+        {},
+        this._event,
+        {
+          isFavorite: !this._data.isFavorite
+        }
+    ));
+    this.updateData({isFavorite: !this._data.isFavorite}, true);
   }
 
   _offersChangeHandler(evt) {
@@ -315,7 +327,7 @@ export default class EventEditView extends SmartView {
         }
         return offer;
       })
-    });
+    }, true);
   }
 
   _formResetHandler(evt) {
@@ -331,6 +343,11 @@ export default class EventEditView extends SmartView {
   setFormSubmitHandler(callback) {
     this._callback.formSubmit = callback;
     this.getElement().addEventListener(`submit`, this._formSubmitHandler);
+  }
+
+  setFavoriteClickHandler(callback) {
+    this._callback.favoriteClick = callback;
+    this.getElement().querySelector(`.event__favorite-btn`).addEventListener(`click`, this._favoriteClickHandler);
   }
 
   _destinationChangeHandler(evt) {
@@ -399,17 +416,22 @@ export default class EventEditView extends SmartView {
     this.getElement().querySelector(`.event__rollup-btn`).addEventListener(`click`, this._rollupClickHandler);
   }
 
-  _removeDatePicker() {
-    if (this._datepicker) {
-      this._datepicker.destroy();
-      this._datepicker = null;
+  _removeDatePickers() {
+    if (this._datepickerStart) {
+      this._datepickerStart.destroy();
+      this._datepickerStart = null;
+    }
+
+    if (this._datepickerEnd) {
+      this._datepickerEnd.destroy();
+      this._datepickerEnd = null;
     }
   }
 
-  _setDatePicker() {
-    this._removeDatePicker();
+  _setDatePickers() {
+    this._removeDatePickers();
 
-    this._datepicker = flatpickr(
+    this._datepickerStart = flatpickr(
         this.getElement().querySelector(`#event-start-time-1`),
         {
           enableTime: true,
@@ -420,31 +442,46 @@ export default class EventEditView extends SmartView {
         }
     );
 
-    this._datepicker = flatpickr(
+    this._datepickerEnd = flatpickr(
         this.getElement().querySelector(`#event-end-time-1`),
         {
           enableTime: true,
           dateFormat: `d/m/y H:i`,
           [`time_24hr`]: true,
           minDate: this._data.startDate,
+          minTime: this._data.startDate,
           defaultDate: this._data.endDate,
           onChange: this._endDateChangeHandler
         }
     );
   }
 
-  _startDateChangeHandler(selectedDate) {
-    this.updateData({startDate: selectedDate[0]});
+  _startDateChangeHandler(userDates) {
+    const selectedDate = userDates[0];
+    if (selectedDate > this._datepickerEnd.selectedDates[0]) {
+      this.updateData({
+        startDate: selectedDate,
+        endDate: selectedDate
+      }, true);
+
+      this._datepickerEnd.setDate(selectedDate);
+    } else {
+      this.updateData({startDate: selectedDate}, true);
+    }
+
+    this._datepickerEnd.set(`minDate`, selectedDate);
+    this._datepickerEnd.set(`minTime`, selectedDate);
   }
 
-  _endDateChangeHandler(selectedDate) {
-    this.updateData({endDate: selectedDate[0]});
+  _endDateChangeHandler(userDates) {
+    const selectedDate = userDates[0];
+    this.updateData({endDate: selectedDate});
   }
 
   _setHandlers() {
-    if (!this._data.isNewEvent) {
-      this.getElement().querySelector(`.event__favorite-btn`).addEventListener(`click`, this._favoriteToggleHandler);
-    }
+    // if (!this._data.isNewEvent) {
+    //   this.getElement().querySelector(`.event__favorite-btn`).addEventListener(`click`, this._favoriteClickHandler);
+    // }
 
     this.getElement().querySelector(`.event__type-group`).addEventListener(`click`, this._eventTypeChangeHandler);
 

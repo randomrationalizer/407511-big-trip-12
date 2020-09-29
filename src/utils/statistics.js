@@ -6,6 +6,21 @@ const filterEventsByType = (tripEvents, eventType) => {
   return tripEvents.filter((tripEvent) => tripEvent.type === eventType);
 };
 
+// Возвращает длительность события в часах
+const countEventDurationInHours = (tripEvent) => {
+  const start = moment(tripEvent.startDate);
+  const end = moment(tripEvent.endDate);
+
+  const duration = moment.duration(end.diff(start));
+
+  return parseInt(duration.asHours(), 10);
+};
+
+// Возвращает суммарную длительность событий заданного типа
+const countEventTypeTimeSpent = (tripEvents) => {
+  return tripEvents.reduce((totalTime, tripEvent) => totalTime + countEventDurationInHours(tripEvent), 0);
+};
+
 // Возвращает map с соответствием типа события и количества поездок на транспорте
 export const countTransportUsages = (tripEvents) => {
   const eventTypes = tripEvents.map((tripEvent) => tripEvent.type).filter((type) => TRANSFER_EVENTS.includes(type));
@@ -24,21 +39,6 @@ export const countEventsTotalCosts = (tripEvents) => {
   }).sort(([, firstCosts], [, secondCosts]) => secondCosts - firstCosts);
 
   return new Map(eventsCosts);
-};
-
-// Возвращает длительность события в часах
-const countEventDurationInHours = (tripEvent) => {
-  const start = moment(tripEvent.startDate);
-  const end = moment(tripEvent.endDate);
-
-  const duration = moment.duration(end.diff(start));
-
-  return parseInt(duration.asHours(), 10);
-};
-
-// Возвращает суммарную длительность событий заданного типа
-const countEventTypeTimeSpent = (tripEvents) => {
-  return tripEvents.reduce((totalTime, tripEvent) => totalTime + countEventDurationInHours(tripEvent), 0);
 };
 
 // Возвращает map с соответствием тип события и его длительности

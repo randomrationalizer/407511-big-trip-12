@@ -96,6 +96,15 @@ export default class Trip {
   // Обработчик изменений в представлении, вызывает обновление модели
   _handleViewAction(actionType, updateType, update) {
     switch (actionType) {
+      case UserAction.ADD_TO_FAVORITE:
+        this._api.updateEvent(update)
+          .then((response) => {
+            this._eventsModel.updateEvent(updateType, response);
+          })
+          .catch(() => {
+            this._eventPresenter[update.id].setViewState(EventPresenterViewState.ABORTING);
+          });
+        break;
       case UserAction.UPDATE_EVENT:
         this._eventPresenter[update.id].setViewState(EventPresenterViewState.SAVING);
         this._api.updateEvent(update)
@@ -130,19 +139,16 @@ export default class Trip {
   // Обработчик изменений в модели, вызывает обновление представления
   _handleModelEvent(updateType, data) {
     switch (updateType) {
-
-      // обновление части списка (например, поменялся пункт назначения точки маршрута)
+      case UpdateType.POINTWISE:
+        this._eventPresenter[data.id].updateForm(data);
+        break;
       case UpdateType.PATCH:
         this._eventPresenter[data.id].init(data);
         break;
-
-      // обновление списка точек маршрута (например, когда задача ушла в архив)
       case UpdateType.MINOR:
         this._clearTrip();
         this._renderTrip();
         break;
-
-      // обновление всей страницы (например, при переключении фильтра)
       case UpdateType.MAJOR:
         this._clearTrip({resetSortType: true});
         this._renderTrip();
