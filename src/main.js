@@ -20,7 +20,7 @@ const DataType = {
   DESTINATIONS: `destinations`
 };
 
-const AUTHORIZATION = `Basic d2f68sf66zcv9`;
+const AUTHORIZATION = `Basic d2fbs2v8cv9`;
 const END_POINT = `https://12.ecmascript.pages.academy/big-trip`;
 const STORE_PREFIX = `big-trip-localstorage`;
 const STORE_VER = `v12`;
@@ -34,16 +34,17 @@ const tripControlsFirstHeadingElement = tripControlsElement.querySelector(`h2`);
 const tripContainerElement = document.querySelector(`.trip-events`);
 const newEventBtnElement = tripMainElement.querySelector(`.trip-main__event-add-btn`);
 
-const api = new Api(END_POINT, AUTHORIZATION);
-const eventsStore = new Store(EVENTS_STORE_NAME, window.localStorage);
-const destinationsStore = new Store(DESTINATIONS_STORE_NAME, window.localStorage);
-const offersStore = new Store(OFFERS_STORE_NAME, window.localStorage);
-const apiWithProvider = new Provider(api, eventsStore, destinationsStore, offersStore);
-
 const eventsModel = new EventsModel();
 const filterModel = new FilterModel();
 const offersModel = new OffersModel();
 const destinationsModel = new DestinationsModel();
+
+const api = new Api(END_POINT, AUTHORIZATION);
+const eventsStore = new Store(EVENTS_STORE_NAME, window.localStorage);
+const destinationsStore = new Store(DESTINATIONS_STORE_NAME, window.localStorage);
+const offersStore = new Store(OFFERS_STORE_NAME, window.localStorage);
+const apiWithProvider = new Provider(api, eventsStore, destinationsStore, offersStore, eventsModel);
+
 
 const menuComponent = new MenuView();
 

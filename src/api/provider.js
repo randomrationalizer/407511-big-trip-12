@@ -1,5 +1,6 @@
 import {nanoid} from "nanoid";
 import EventsModel from "../model/events.js";
+import {UpdateType} from "../const.js";
 
 const getSyncedEvents = (items) => {
   return items.filter(({success}) => success)
@@ -15,11 +16,13 @@ const createStoreStructure = (items) => {
 };
 
 export default class Provider {
-  constructor(api, eventsStore, destinationsStore, offersStore) {
+  constructor(api, eventsStore, destinationsStore, offersStore, eventsModel) {
     this._api = api;
     this._eventsStore = eventsStore;
     this._destinationsStore = destinationsStore;
     this._offersStore = offersStore;
+    this._eventsModel = eventsModel;
+
     this._isSyncRequired = false;
   }
 
@@ -121,12 +124,12 @@ export default class Provider {
 
       return this._api.sync(storedEvents)
         .then((response) => {
-          const createdEvents = getSyncedEvents(response.created);
+          const createdEvents = response.created;
           const updatedEvents = getSyncedEvents(response.updated);
+          const items = [...createdEvents, ...updatedEvents];
 
-          const items = createStoreStructure([...createdEvents, ...updatedEvents]);
-
-          this._eventsStore.setItems(items);
+          this._eventsStore.setItems(createStoreStructure(items));
+          this._eventsModel.setEvents(UpdateType.MINOR, items.map(EventsModel.adaptToClient));
 
           this._isSyncRequired = false;
         });

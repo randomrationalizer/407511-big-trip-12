@@ -14,7 +14,8 @@ export const SortType = {
 export const UserAction = {
   UPDATE_EVENT: `UPDATE_EVENT`,
   ADD_EVENT: `ADD_EVENT`,
-  DELETE_EVENT: `DELETE_EVENT`
+  DELETE_EVENT: `DELETE_EVENT`,
+  ADD_TO_FAVORITE: `ADD_TO_FAVORITE`
 };
 
 // Степень вносимых изменений
@@ -22,7 +23,8 @@ export const UpdateType = {
   PATCH: `PATCH`,
   MINOR: `MINOR`,
   MAJOR: `MAJOR`,
-  INIT: `INIT`
+  INIT: `INIT`,
+  POINTWISE: `POINTWISE`
 };
 
 export const FilterType = {

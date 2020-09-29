@@ -189,13 +189,14 @@ export default class EventEditView extends SmartView {
     this._offers = this._offersModel.getOffers();
     this._destinations = this._destinationsModel.getDestinations();
 
+    this._event = tripEvent;
     this._data = EventEditView.parseEventToData(this._offers, tripEvent);
 
     this._datepickerStart = null;
     this._datepickerEnd = null;
 
     this._formSubmitHandler = this._formSubmitHandler.bind(this);
-    this._favoriteToggleHandler = this._favoriteToggleHandler.bind(this);
+    this._favoriteClickHandler = this._favoriteClickHandler.bind(this);
     this._rollupClickHandler = this._rollupClickHandler.bind(this);
     this._eventTypeChangeHandler = this._eventTypeChangeHandler.bind(this);
     this._offersChangeHandler = this._offersChangeHandler.bind(this);
@@ -284,6 +285,9 @@ export default class EventEditView extends SmartView {
     this._setHandlers();
     this.setRollupClickHandler(this._callback.rollupClick);
     this._setDatePickers();
+    if (!this._data.isNewEvent) {
+      this.setFavoriteClickHandler(this._callback.favoriteClick);
+    }
   }
 
   // Удаляет ненужные календари при удалении элемента
@@ -298,9 +302,16 @@ export default class EventEditView extends SmartView {
     this._callback.formSubmit(EventEditView.parseDataToEvent(this._data));
   }
 
-  _favoriteToggleHandler(evt) {
+  _favoriteClickHandler(evt) {
     evt.preventDefault();
-    this.updateData({isFavorite: !this._data.isFavorite});
+    this._callback.favoriteClick(Object.assign(
+        {},
+        this._event,
+        {
+          isFavorite: !this._data.isFavorite
+        }
+    ));
+    this.updateData({isFavorite: !this._data.isFavorite}, true);
   }
 
   _offersChangeHandler(evt) {
@@ -332,6 +343,11 @@ export default class EventEditView extends SmartView {
   setFormSubmitHandler(callback) {
     this._callback.formSubmit = callback;
     this.getElement().addEventListener(`submit`, this._formSubmitHandler);
+  }
+
+  setFavoriteClickHandler(callback) {
+    this._callback.favoriteClick = callback;
+    this.getElement().querySelector(`.event__favorite-btn`).addEventListener(`click`, this._favoriteClickHandler);
   }
 
   _destinationChangeHandler(evt) {
@@ -463,9 +479,9 @@ export default class EventEditView extends SmartView {
   }
 
   _setHandlers() {
-    if (!this._data.isNewEvent) {
-      this.getElement().querySelector(`.event__favorite-btn`).addEventListener(`click`, this._favoriteToggleHandler);
-    }
+    // if (!this._data.isNewEvent) {
+    //   this.getElement().querySelector(`.event__favorite-btn`).addEventListener(`click`, this._favoriteClickHandler);
+    // }
 
     this.getElement().querySelector(`.event__type-group`).addEventListener(`click`, this._eventTypeChangeHandler);
 

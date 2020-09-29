@@ -35,6 +35,7 @@ export default class Event {
     this._handleFormSubmit = this._handleFormSubmit.bind(this);
     this._handleFormReset = this._handleFormReset.bind(this);
     this._escKeyDownHandler = this._escKeyDownHandler.bind(this);
+    this._handleFavoriteBtnClick = this._handleFavoriteBtnClick.bind(this);
   }
 
   init(tripEvent) {
@@ -50,6 +51,7 @@ export default class Event {
     this._eventEditComponent.setFormSubmitHandler(this._handleFormSubmit);
     this._eventEditComponent.setFormResetHandler(this._handleFormReset);
     this._eventEditComponent.setRollupClickHandler(this._handleRollupBtnClick);
+    this._eventEditComponent.setFavoriteClickHandler(this._handleFavoriteBtnClick);
 
     // первичная инициализация
     if (prevEventComponent === null || prevEventEditComponent === null) {
@@ -148,6 +150,15 @@ export default class Event {
 
       this._replaceFormToEvent();
     }
+  }
+
+  updateForm(tripEvent) {
+    this._event = tripEvent;
+    this._eventEditComponent.updateElement();
+  }
+
+  _handleFavoriteBtnClick(updatedEvent) {
+    this._changeData(UserAction.ADD_TO_FAVORITE, UpdateType.POINTWISE, updatedEvent);
   }
 
   _escKeyDownHandler(evt) {
