@@ -4,7 +4,7 @@ import AbstractView from "./abstract.js";
 // Возвращает шаблон блока маршрута путешествия
 const createRouteTemplate = (route) => {
   const first = route[0];
-  let last = route.length === 1 ? `` : route[route.length - 1];
+  const last = route.length === 1 ? `` : route[route.length - 1];
   let middle = ``;
 
   switch (route.length) {

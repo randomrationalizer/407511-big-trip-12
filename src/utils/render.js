@@ -32,7 +32,7 @@ export const render = (container, element, place) => {
 
 // Возвращает DOM-элемент из шаблона
 export const createElement = (template) => {
-  let newElement = document.createElement(`div`);
+  const newElement = document.createElement(`div`);
   newElement.innerHTML = template;
 
   return newElement.firstChild;
