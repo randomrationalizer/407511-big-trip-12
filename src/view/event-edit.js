@@ -479,10 +479,6 @@ export default class EventEditView extends SmartView {
   }
 
   _setHandlers() {
-    // if (!this._data.isNewEvent) {
-    //   this.getElement().querySelector(`.event__favorite-btn`).addEventListener(`click`, this._favoriteClickHandler);
-    // }
-
     this.getElement().querySelector(`.event__type-group`).addEventListener(`click`, this._eventTypeChangeHandler);
 
     if (this._data.isOffersAvailable) {
